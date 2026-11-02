@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "forno",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "forno",
+      "Username": "forno",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass",
+      "Comment": "Auto-provisioned — see deploy/pgadmin/README.md"
+    }
+  }
+}

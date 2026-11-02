@@ -1,0 +1,46 @@
+name: tiny
+description: Minimal scenario for unit tests.
+
+pizzeria:
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 2, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 1, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 1, waiters: 1 }
+
+  tables:
+    - { number: 1, seats: 2 }
+    - { number: 2, seats: 4 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "30.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.6 }
+    - { sku: diavola, name: Diavola, price: "36.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.4 }
+
+simulation:
+  seed: 1
+  duration_minutes: 5
+  time_scale: 60
+
+  arrivals:
+    model: poisson
+    per_hour: 10
+
+  parties:
+    size_weights: { 1: 0.5, 2: 0.5 }
+    takeaway_ratio: 0.2
+
+  behaviour:
+    deliberation_seconds: { min: 10, max: 20 }
+    remake_rate: 0.02
+    walkout_after_seconds: 300
+    double_submit_rate: 0.02
+
+  expect:
+    breach_rate: { min: 0.0, max: 0.5 }
+    walkouts_max: 5

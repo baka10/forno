@@ -1,0 +1,122 @@
+<mxfile>
+  <diagram id="system-context" name="System Context">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="manager" value="Manager&#xa;[Person]&#xa;Defines menu, capacity, tables" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="cashier" value="Cashier&#xa;[Person]&#xa;Takes orders, assigns tables" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="240" y="0" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="chef" value="Chef&#xa;[Person]&#xa;Works tickets at a station" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="470" y="0" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="waiter" value="Waiter&#xa;[Person]&#xa;Delivers, closes tables" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="710" y="0" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="operator" value="Operator&#xa;[Person]&#xa;Watches the SLO" style="shape=mxgraph.c4.person2;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="1">
+          <mxGeometry x="350" y="430" width="200" height="180" as="geometry"/>
+        </mxCell>
+        <UserObject label="Forno&#xa;[Software System]&#xa;Event-driven pizzeria operations backend" link="data:page/id,containers" id="forno">
+          <mxCell style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="330" y="240" width="240" height="120" as="geometry"/>
+        </mxCell>
+        </UserObject>
+        <mxCell id="e0" value="REST" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="manager" target="forno">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="240"/><mxPoint x="100" y="300"/><mxPoint x="100" y="300"/><mxPoint x="100" y="300"/><mxPoint x="320" y="300"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="REST" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="cashier" target="forno">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="380" y="180"/><mxPoint x="380" y="230"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="REST + SSE" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="chef" target="forno">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="180"/><mxPoint x="520" y="230"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="REST + SSE" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="waiter" target="forno">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="810" y="240"/><mxPoint x="810" y="300"/><mxPoint x="810" y="300"/><mxPoint x="810" y="300"/><mxPoint x="580" y="300"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="metrics, alerts" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="forno" target="operator">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="450" y="370"/><mxPoint x="450" y="420"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="containers" name="Containers">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="api" value="api&#xa;[Container: FastAPI, uvicorn]&#xa;REST commands + SSE fan-out" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="0" y="370" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="relay" value="outbox-relay&#xa;[Container: Python]&#xa;poll -&gt; publish -&gt; mark sent" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="280" y="0" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="pkit" value="projector-kitchen&#xa;[Container: Python]&#xa;order events -&gt; kitchen ticket read model" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="550" y="370" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="psta" value="projector-stats&#xa;[Container: Python]&#xa;order events -&gt; aggregates" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="280" y="370" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="postgres" value="PostgreSQL&#xa;[Container: PostgreSQL 16]&#xa;aggregates, outbox, inbox, read models" style="shape=cylinder3;size=15;boundedLbl=1;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="480" y="550" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="redpanda" value="Redpanda&#xa;[Container: Kafka protocol]&#xa;3 topics + DLQ" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="280" y="180" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="prometheus" value="Prometheus&#xa;[Container: Prometheus]&#xa;recording + alert rules" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="140" y="550" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="grafana" value="Grafana&#xa;[Container: Grafana]&#xa;provisioned dashboards" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="140" y="740" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="simulator" value="simulator&#xa;[Software System: external client, separate image]&#xa;manager, cashier, chef, waiter actors" style="rounded=1;arcSize=10;html=1;whiteSpace=wrap;fontSize=12;fontColor=#ffffff;align=center;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="1">
+          <mxGeometry x="0" y="180" width="240" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="REST + SSE" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="simulator" target="api">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="310"/><mxPoint x="120" y="360"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="write" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="api" target="postgres">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="210" y="500"/><mxPoint x="210" y="510"/><mxPoint x="210" y="510"/><mxPoint x="210" y="510"/><mxPoint x="490" y="510"/><mxPoint x="490" y="510"/><mxPoint x="490" y="510"/><mxPoint x="490" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="SKIP LOCKED poll" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="relay" target="postgres">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="530" y="60"/><mxPoint x="530" y="60"/><mxPoint x="530" y="60"/><mxPoint x="530" y="60"/><mxPoint x="530" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="produce" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="relay" target="redpanda">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="400" y="120"/><mxPoint x="400" y="170"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="consume: kitchen" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="redpanda" target="pkit">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="590" y="240"/><mxPoint x="670" y="240"/><mxPoint x="670" y="240"/><mxPoint x="670" y="240"/><mxPoint x="670" y="360"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="consume: stats" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="redpanda" target="psta">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="400" y="310"/><mxPoint x="400" y="360"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="fan-out to SSE" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="redpanda" target="api">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="240"/><mxPoint x="260" y="240"/><mxPoint x="260" y="240"/><mxPoint x="260" y="240"/><mxPoint x="260" y="430"/><mxPoint x="260" y="430"/><mxPoint x="260" y="430"/><mxPoint x="250" y="430"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="upsert read model" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="pkit" target="postgres">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="670" y="490"/><mxPoint x="670" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="upsert aggregates" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="psta" target="postgres">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="510" y="490"/><mxPoint x="510" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="scrape /metrics" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="api" target="prometheus">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="170" y="490"/><mxPoint x="170" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="relay" target="prometheus">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="60"/><mxPoint x="250" y="60"/><mxPoint x="250" y="60"/><mxPoint x="250" y="60"/><mxPoint x="250" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="pkit" target="prometheus">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="610" y="510"/><mxPoint x="610" y="530"/><mxPoint x="610" y="530"/><mxPoint x="610" y="530"/><mxPoint x="340" y="530"/><mxPoint x="340" y="530"/><mxPoint x="340" y="530"/><mxPoint x="340" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="psta" target="prometheus">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="310" y="490"/><mxPoint x="310" y="540"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e13" value="query" style="endArrow=blockThin;endFill=1;endSize=10;html=1;fontSize=11;fontColor=#404040;strokeColor=#828282;labelBackgroundColor=#ffffff;rounded=0;" edge="1" parent="1" source="prometheus" target="grafana">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="680"/><mxPoint x="260" y="730"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

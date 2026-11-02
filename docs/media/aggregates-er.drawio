@@ -1,0 +1,61 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="ORDER" value="ORDER&#xa;id PK · status · channel&#xa;table_number FK · placed_at&#xa;promised_at · ready_at&#xa;total_gross · version" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="240" y="120" width="210" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="ORDER_ITEM" value="ORDER_ITEM&#xa;id PK · order_id FK&#xa;menu_item_id (ref) · name_snapshot&#xa;unit_price_snapshot · vat_rate_snapshot&#xa;fire_group · status · remake_of FK" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="480" y="230" width="230" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="TABLE" value="TABLE&#xa;number PK · seats&#xa;current_order_id FK (nullable)" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="1">
+          <mxGeometry x="490" y="100" width="210" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="MENU_ITEM" value="MENU_ITEM&#xa;id PK · sku · name&#xa;price · vat_rate · available" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="1">
+          <mxGeometry x="750" y="240" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="KITCHEN_TICKET" value="KITCHEN_TICKET&#xa;id PK · order_id FK&#xa;status · created_at" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="0" y="310" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="TICKET_LINE" value="TICKET_LINE&#xa;id PK · ticket_id FK&#xa;order_item_id FK · station&#xa;status" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="240" y="300" width="200" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="STATION" value="STATION&#xa;id PK · capacity&#xa;seconds_per_item" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="1">
+          <mxGeometry x="500" y="370" width="190" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="OVEN" value="OVEN&#xa;id PK · slots&#xa;bake_seconds · active" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="190" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="OVEN_SLOT" value="OVEN_SLOT&#xa;id PK · oven_id FK · slot&#xa;order_item_id FK (nullable)&#xa;release_time" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="1">
+          <mxGeometry x="240" y="0" width="210" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="contains" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERmany;startArrow=ERmandOne;fontColor=#000000;" edge="1" parent="1" source="ORDER" target="ORDER_ITEM">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="450" y="240"/><mxPoint x="470" y="240"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="seated at (nullable)" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERzeroToOne;startArrow=ERzeroToMany;fontColor=#000000;" edge="1" parent="1" source="ORDER" target="TABLE">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="450" y="150"/><mxPoint x="480" y="150"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="snapshot of" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERmandOne;startArrow=ERmany;fontColor=#000000;" edge="1" parent="1" source="ORDER_ITEM" target="MENU_ITEM">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="710" y="290"/><mxPoint x="740" y="290"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="remake of" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERzeroToOne;fontColor=#000000;" edge="1" parent="1" source="ORDER_ITEM" target="ORDER_ITEM">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="470" y="340"/><mxPoint x="460" y="340"/><mxPoint x="460" y="340"/><mxPoint x="460" y="340"/><mxPoint x="460" y="360"/><mxPoint x="460" y="360"/><mxPoint x="460" y="360"/><mxPoint x="730" y="360"/><mxPoint x="730" y="360"/><mxPoint x="730" y="360"/><mxPoint x="730" y="350"/><mxPoint x="730" y="350"/><mxPoint x="730" y="350"/><mxPoint x="720" y="350"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="projection of" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERmany;startArrow=ERmandOne;fontColor=#000000;" edge="1" parent="1" source="KITCHEN_TICKET" target="TICKET_LINE">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="350"/><mxPoint x="230" y="350"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="reflects" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERmandOne;startArrow=ERmany;fontColor=#000000;" edge="1" parent="1" source="TICKET_LINE" target="ORDER_ITEM">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="440" y="320"/><mxPoint x="470" y="320"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="worked at" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERmandOne;startArrow=ERmany;fontColor=#000000;" edge="1" parent="1" source="TICKET_LINE" target="STATION">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="440" y="390"/><mxPoint x="490" y="390"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="has" style="edgeStyle=entityRelationEdgeStyle;html=1;endArrow=ERmany;startArrow=ERmandOne;fontColor=#000000;" edge="1" parent="1" source="OVEN" target="OVEN_SLOT">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="50"/><mxPoint x="230" y="50"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

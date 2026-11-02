@@ -1,0 +1,55 @@
+# SLI pre-computed at every burn-rate window so the alert expression and the
+# dashboard panel are guaranteed to compute the same number.
+# See docs/observability.md "SLO" and "Recording rules".
+#
+# Numerator and denominator are both counted at the moment an order goes
+# READY (`forno_order_ready_seconds` is observed by the same projector event
+# that decides whether the promise was kept), so the ratio is always
+# "late readies / all readies" — never late readies over *closed* orders,
+# which would drift whenever orders are still open or get voided.
+# The `> 0` guard makes an idle window "no data" rather than NaN.
+
+groups:
+  - name: forno-sli
+    interval: 30s
+    rules:
+      - record: forno:promise_met:ratio_rate5m
+        expr: |
+          1 - (
+            sum(rate(forno_promise_breaches_total[5m]))
+            /
+            (sum(rate(forno_order_ready_seconds_count[5m])) > 0)
+          )
+
+      - record: forno:promise_met:ratio_rate30m
+        expr: |
+          1 - (
+            sum(rate(forno_promise_breaches_total[30m]))
+            /
+            (sum(rate(forno_order_ready_seconds_count[30m])) > 0)
+          )
+
+      - record: forno:promise_met:ratio_rate1h
+        expr: |
+          1 - (
+            sum(rate(forno_promise_breaches_total[1h]))
+            /
+            (sum(rate(forno_order_ready_seconds_count[1h])) > 0)
+          )
+
+      - record: forno:promise_met:ratio_rate6h
+        expr: |
+          1 - (
+            sum(rate(forno_promise_breaches_total[6h]))
+            /
+            (sum(rate(forno_order_ready_seconds_count[6h])) > 0)
+          )
+
+      # The SLO window itself — feeds "error budget left" on the dashboard.
+      - record: forno:promise_met:ratio_rate30d
+        expr: |
+          1 - (
+            sum(increase(forno_promise_breaches_total[30d]))
+            /
+            (sum(increase(forno_order_ready_seconds_count[30d])) > 0)
+          )

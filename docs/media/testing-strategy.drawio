@@ -1,0 +1,49 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="group_0" value="Fast — no I/O, run constantly" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;fontColor=#6c8ebf;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="6" width="808" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="group_1" value="Integration — real dependencies" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;fontColor=#82b366;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="136" y="126" width="558" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="group_2" value="System — real everything" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;fontColor=#d79b00;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="256" y="236" width="308" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="U" value="domain unit tests&#xa;pure functions, value objects" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#347D39;strokeColor=#2B6A30;" vertex="1" parent="group_0">
+          <mxGeometry x="554" y="24" width="230" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="P" value="property tests&#xa;Hypothesis stateful FSM" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#347D39;strokeColor=#2B6A30;" vertex="1" parent="group_0">
+          <mxGeometry x="304" y="24" width="230" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="A" value="application tests&#xa;fake repos, InMemoryPublisher, FrozenClock" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#347D39;strokeColor=#2B6A30;" vertex="1" parent="group_0">
+          <mxGeometry x="24" y="24" width="260" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="I" value="repositories, outbox relay,&#xa;consumers, inbox (testcontainers)" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_1">
+          <mxGeometry x="274" y="24" width="260" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="C" value="contract conformance&#xa;OpenAPI + AsyncAPI" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_1">
+          <mxGeometry x="24" y="24" width="230" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="S" value="simulator invariants&#xa;4 actor roles, real HTTP + broker,&#xa;concurrent, seeded" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#67AB49;strokeColor=#4C8033;" vertex="1" parent="group_2">
+          <mxGeometry x="24" y="24" width="260" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="" style="html=1;endArrow=none;" edge="1" parent="1" source="U" target="I">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="610" y="90"/><mxPoint x="610" y="140"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="" style="html=1;endArrow=none;" edge="1" parent="1" source="A" target="C">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="230" y="90"/><mxPoint x="230" y="140"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;endArrow=none;" edge="1" parent="1" source="I" target="S">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="470" y="210"/><mxPoint x="470" y="250"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="" style="html=1;endArrow=none;" edge="1" parent="1" source="C" target="S">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="210"/><mxPoint x="340" y="250"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,29 @@
+# Kept minimal on purpose: the `dev`/`test` stages need the full source tree
+# (including tests/) inside the image. This only excludes things that are
+# never needed in any build stage and would otherwise bloat/slow the build
+# context or bust layer caches on unrelated changes.
+
+.git/
+.github/
+
+# Local virtualenvs — never valid inside the container, uv builds its own.
+.venv/
+simulator/.venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editor/agent tooling scratch — not part of the application.
+.claude/
+.idea/
+.superpowers/
+
+# Compose-only / host-only files.
+.env
+.env.*
+!.env.example
+
+# Generated diagram binaries — docs, not build inputs.
+docs/media/*.png

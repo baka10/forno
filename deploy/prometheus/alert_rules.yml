@@ -1,0 +1,102 @@
+# Multi-window, multi-burn-rate alerting on the promise SLO, plus the
+# reliability-machinery alerts. See docs/observability.md "Alerts" and
+# docs/runbook.md for the response to each one.
+
+groups:
+  - name: forno-slo-burn
+    rules:
+      - alert: PromiseBudgetBurnFast
+        expr: |
+          (1 - forno:promise_met:ratio_rate1h) > (14.4 * 0.05)
+          and
+          (1 - forno:promise_met:ratio_rate5m) > (14.4 * 0.05)
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: "Kitchen is falling behind — promise breach burning error budget 14.4x"
+          runbook: "docs/runbook.md#promisebudgetburn-fast--slow"
+
+      - alert: PromiseBudgetBurnSlow
+        expr: |
+          (1 - forno:promise_met:ratio_rate6h) > (6 * 0.05)
+          and
+          (1 - forno:promise_met:ratio_rate30m) > (6 * 0.05)
+        for: 15m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Chronic under-capacity — burning error budget at 6x"
+          runbook: "docs/runbook.md#promisebudgetburn-fast--slow"
+
+  - name: forno-reliability
+    rules:
+      - alert: OutboxLagHigh
+        expr: forno_outbox_lag_seconds > 30
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: "Outbox relay is stuck — kitchen displays are going stale"
+          runbook: "docs/runbook.md#outboxlaghigh--outboxbackloggrowing"
+
+      - alert: OutboxBacklogGrowing
+        expr: deriv(forno_outbox_pending[10m]) > 0
+        for: 15m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Producing faster than publishing"
+          runbook: "docs/runbook.md#outboxlaghigh--outboxbackloggrowing"
+
+      - alert: ProjectionLagHigh
+        expr: forno_projection_lag_seconds > 60
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "The KDS is showing the past"
+          runbook: "docs/runbook.md#projectionlaghigh"
+
+      - alert: DLQNotEmpty
+        expr: increase(forno_dlq_messages_total[15m]) > 0
+        labels: { severity: ticket }
+        annotations:
+          summary: "Something needs a human"
+          runbook: "docs/runbook.md#dlqnotempty--poisoneventdetected"
+
+      - alert: PoisonEventDetected
+        expr: increase(forno_dlq_messages_total{classification="poison"}[5m]) > 0
+        labels: { severity: page }
+        annotations:
+          summary: "Schema or contract break"
+          runbook: "docs/runbook.md#dlqnotempty--poisoneventdetected"
+
+      - alert: OvenSaturated
+        expr: forno_oven_slots_occupied / forno_oven_slots_total > 0.95
+        for: 10m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Capacity, not a defect"
+          runbook: "docs/runbook.md"
+
+      - alert: TicketAgeExceedsPromise
+        expr: forno_kitchen_oldest_ticket_age_seconds > 900
+        labels: { severity: page }
+        annotations:
+          summary: "Something is stuck, not merely slow"
+          runbook: "docs/runbook.md#ticketageexceedspromise"
+
+      - alert: RemakeRateHigh
+        expr: rate(forno_remakes_total[30m]) > 0.1 * rate(forno_items_sold_total[30m])
+        for: 15m
+        labels: { severity: ticket }
+        annotations:
+          summary: "Quality problem upstream of the software"
+          runbook: "docs/runbook.md"
+
+      - alert: ApiErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="forno-api", status="5xx"}[5m]))
+          /
+          sum(rate(http_requests_total{job="forno-api"}[5m])) > 0.01
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "Standard RED backstop"
+          runbook: "docs/runbook.md#apierrorrate"

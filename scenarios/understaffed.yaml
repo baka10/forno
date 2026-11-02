@@ -1,0 +1,68 @@
+# Deliberately breaches the SLO. The most useful file in the repository:
+# reproducibly fires PromiseBudgetBurnFast and TicketAgeExceedsPromise in ~90s.
+# See docs/configuration.md and docs/observability.md "Alerts".
+
+name: understaffed
+description: >
+  Same demand as busy-friday, a fraction of the capacity. Burns the error budget
+  and fires the alerts on demand.
+
+pizzeria:
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 4, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 1, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 1, waiters: 1 }
+
+  tables:
+    - { number: 1, seats: 4 }
+    - { number: 2, seats: 2 }
+    - { number: 3, seats: 4 }
+    - { number: 4, seats: 4 }
+    - { number: 5, seats: 2 }
+    - { number: 6, seats: 6 }
+    - { number: 7, seats: 4 }
+    - { number: 8, seats: 2 }
+    - { number: 9, seats: 4 }
+    - { number: 10, seats: 4 }
+    - { number: 11, seats: 2 }
+    - { number: 12, seats: 4 }
+    - { number: 13, seats: 6 }
+    - { number: 14, seats: 2 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "32.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.35 }
+    - { sku: diavola, name: Diavola, price: "38.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.25 }
+    - { sku: calzone, name: Calzone, price: "41.00", vat: "0.08", prep_seconds: 240, bake_seconds: 720, popularity: 0.10 }
+    - { sku: quattro-stagioni, name: Quattro Stagioni, price: "42.00", vat: "0.08", prep_seconds: 160, bake_seconds: 500, popularity: 0.15 }
+    - { sku: funghi, name: Funghi, price: "36.00", vat: "0.08", prep_seconds: 130, bake_seconds: 480, popularity: 0.15 }
+
+simulation:
+  seed: 42
+  duration_minutes: 120
+  time_scale: 120 # 480 domain seconds → 4 wall-clock seconds; a full service in about a minute
+
+  arrivals: # identical to busy-friday — the demand is the same, the staff is not
+    model: poisson
+    per_hour: 14
+    rush: { at: "19:00", duration_minutes: 45, multiplier: 1.5 }
+
+  parties:
+    size_weights: { 1: 0.15, 2: 0.40, 3: 0.15, 4: 0.20, 6: 0.10 }
+    takeaway_ratio: 0.25
+
+  behaviour:
+    deliberation_seconds: { min: 60, max: 300 }
+    remake_rate: 0.05 # a chef doing three people's job drops more pizzas
+    walkout_after_seconds: 1500
+    double_submit_rate: 0.02
+
+  expect: # it is supposed to go badly: one chef cannot prep 36 pizzas an hour
+    breach_rate: { min: 0.30, max: 1.0 }
+    walkouts_max: 80

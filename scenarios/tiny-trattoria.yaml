@@ -1,0 +1,55 @@
+# The smallest configuration that works. Proves nothing is hardcoded to a large setup.
+# See docs/configuration.md "Bundled scenarios".
+
+name: tiny-trattoria
+description: >
+  A two-table-plus trattoria: one oven, one chef, one waiter. Light, steady demand.
+
+pizzeria:
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 4, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 1, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 1, waiters: 1 }
+
+  tables:
+    - { number: 1, seats: 2 }
+    - { number: 2, seats: 2 }
+    - { number: 3, seats: 4 }
+    - { number: 4, seats: 4 }
+    - { number: 5, seats: 2 }
+    - { number: 6, seats: 2 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "30.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.5 }
+    - { sku: diavola, name: Diavola, price: "36.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.3 }
+    - { sku: calzone, name: Calzone, price: "39.00", vat: "0.08", prep_seconds: 240, bake_seconds: 720, popularity: 0.2 }
+
+simulation:
+  seed: 42
+  duration_minutes: 90
+  time_scale: 120 # 480 domain seconds → 4 wall-clock seconds; a full service in about a minute
+
+  arrivals:
+    model: poisson
+    per_hour: 5 # one pizzaiolo preps ~20-30 pizzas an hour; five small parties keep them busy, not drowning
+
+  parties:
+    size_weights: { 1: 0.3, 2: 0.5, 4: 0.2 } # mostly couples — a four-top alone is a 20-minute job for one chef
+    takeaway_ratio: 0.1
+
+  behaviour:
+    deliberation_seconds: { min: 60, max: 240 }
+    remake_rate: 0.02
+    walkout_after_seconds: 1800 # 30 min: a four-top is 4 x 2 min prep + 8 min bake before anything else is counted
+    double_submit_rate: 0.02
+
+  expect: # it works, it is not fast: one chef quoting 20 minutes is late on most four-tops, and nobody leaves
+    breach_rate: { min: 0.0, max: 0.7 }
+    walkouts_max: 2

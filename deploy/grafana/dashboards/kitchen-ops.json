@@ -1,0 +1,178 @@
+{
+  "title": "Kitchen Ops",
+  "uid": "forno-kitchen-ops",
+  "description": "What a manager watches during service. Durations are scaled domain seconds (ADR-0009): at time_scale 120 an 8-minute bake shows as 4 seconds.",
+  "tags": ["forno"],
+  "timezone": "utc",
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "schemaVersion": 39,
+  "links": [
+    { "title": "Service Health", "type": "link", "url": "/d/forno-service-health", "icon": "dashboard" }
+  ],
+  "panels": [
+    {
+      "id": 1, "type": "row", "title": "At a glance",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Open orders",
+      "description": "Placed but not yet closed, cancelled or voided — work in progress on the floor and in the kitchen.",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "targets": [{ "expr": "sum(forno_orders_open)", "legendFormat": "open", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "mode": "fixed", "fixedColor": "blue" } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 3, "type": "stat", "title": "Oldest ticket age",
+      "description": "Age, not depth — the kitchen backlog SLI. Red past 900s, the TicketAgeExceedsPromise alert threshold.",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "targets": [{ "expr": "max(forno_kitchen_oldest_ticket_age_seconds)", "legendFormat": "age", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null },
+        { "color": "orange", "value": 480 },
+        { "color": "red", "value": 900 }
+      ] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 4, "type": "stat", "title": "Orders ready (15m)",
+      "description": "Orders whose every pizza reached the pass in the last 15 minutes.",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "targets": [{ "expr": "sum(increase(forno_order_ready_seconds_count[15m]))", "legendFormat": "ready", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "green" } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 5, "type": "gauge", "title": "Promise kept (1h)",
+      "description": "Share of orders ready no later than promised. SLO target 95%.",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "targets": [{ "expr": "forno:promise_met:ratio_rate1h", "legendFormat": "kept", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0.5, "max": 1, "thresholds": { "mode": "absolute", "steps": [
+        { "color": "red", "value": null },
+        { "color": "orange", "value": 0.9 },
+        { "color": "green", "value": 0.95 }
+      ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true }
+    },
+    {
+      "id": 6, "type": "stat", "title": "Walkouts (1h)",
+      "description": "Orders voided after the customer gave up waiting. Some are normal on a Friday; a climb means the kitchen is behind.",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "targets": [{ "expr": "sum(increase(forno_orders_total{outcome=\"voided\"}[1h]))", "legendFormat": "walkouts", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null },
+        { "color": "orange", "value": 3 },
+        { "color": "red", "value": 8 }
+      ] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 7, "type": "gauge", "title": "Oven utilisation",
+      "description": "Occupied slots over configured slots, all ovens. The 'should we buy a second oven' number.",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "targets": [{ "expr": "sum(forno_oven_slots_occupied) / (sum(forno_oven_slots_total) > 0)", "legendFormat": "utilisation", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "thresholds": { "mode": "absolute", "steps": [
+        { "color": "green", "value": null },
+        { "color": "orange", "value": 0.75 },
+        { "color": "red", "value": 0.95 }
+      ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true }
+    },
+    {
+      "id": 8, "type": "row", "title": "Service",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "Ticket age by station",
+      "description": "Oldest open ticket line per station. The dashed line is the 900s TicketAgeExceedsPromise alert threshold.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "targets": [{ "expr": "forno_kitchen_oldest_ticket_age_seconds", "legendFormat": "{{station}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "fillOpacity": 10, "lineWidth": 2, "thresholdsStyle": { "mode": "dashed" } },
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "transparent", "value": null }, { "color": "red", "value": 900 } ] } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Throughput per minute",
+      "description": "Pizzas ordered vs. orders that reached the pass, were served, or were voided. Ordered climbing while ready stays flat is the kitchen falling behind.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [
+        { "expr": "sum(rate(forno_items_sold_total[2m])) * 60", "legendFormat": "pizzas ordered", "refId": "A" },
+        { "expr": "sum(rate(forno_order_ready_seconds_count[2m])) * 60", "legendFormat": "orders ready", "refId": "B" },
+        { "expr": "sum(rate(forno_orders_total{outcome=\"served\"}[2m])) * 60", "legendFormat": "orders served", "refId": "C" },
+        { "expr": "sum(rate(forno_orders_total{outcome=\"voided\"}[2m])) * 60", "legendFormat": "walkouts", "refId": "D" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 1, "custom": { "fillOpacity": 8, "lineWidth": 2 } },
+        "overrides": [ { "matcher": { "id": "byName", "options": "walkouts" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] } ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Time to ready vs. promise (p50 / p95)",
+      "description": "Placed → every pizza at the pass. Late = how far past promised_at; early = how far before. Scaled domain seconds.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(forno_order_ready_seconds_bucket[5m])) by (le))", "legendFormat": "time to ready p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(forno_order_ready_seconds_bucket[5m])) by (le))", "legendFormat": "time to ready p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.95, sum(rate(forno_promise_late_seconds_bucket[5m])) by (le))", "legendFormat": "late p95", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "fillOpacity": 5, "lineWidth": 2 } },
+        "overrides": [ { "matcher": { "id": "byName", "options": "late p95" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] } ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "Fire-together spread (p50 / p95)",
+      "description": "How long the first pizza of an order waits at the pass for its siblings — the coursing-quality signal the CP-SAT estimator seam exists to improve (ADR-0007).",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(forno_fire_group_spread_seconds_bucket[5m])) by (le))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum(rate(forno_fire_group_spread_seconds_bucket[5m])) by (le))", "legendFormat": "p95", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "fillOpacity": 10, "lineWidth": 2, "thresholdsStyle": { "mode": "dashed" } },
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "transparent", "value": null }, { "color": "orange", "value": 90 } ] } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 13, "type": "row", "title": "Kitchen",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 }
+    },
+    {
+      "id": 14, "type": "timeseries", "title": "Oven utilisation by oven",
+      "description": "Occupied / configured slots per oven. Flat at 100% during the rush is the oven being the bottleneck.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "targets": [{ "expr": "forno_oven_slots_occupied / forno_oven_slots_total", "legendFormat": "{{oven}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "custom": { "fillOpacity": 25, "lineWidth": 1 } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 15, "type": "timeseries", "title": "Where time goes: mean seconds per stage",
+      "description": "Mean time an item spent in queue, prep, oven and at the pass before moving on. Localises the bottleneck to a stage instead of saying 'slow'.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "targets": [{ "expr": "sum by (stage) (rate(forno_item_stage_seconds_sum[5m])) / (sum by (stage) (rate(forno_item_stage_seconds_count[5m])) > 0)", "legendFormat": "{{stage}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "fillOpacity": 60, "lineWidth": 1, "stacking": { "mode": "normal", "group": "A" } } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 16, "type": "bargauge", "title": "Pizzas sold",
+      "description": "Per menu item, whole run. Bounded by menu size — the one label that grows with data.",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 31 },
+      "targets": [{ "expr": "topk(10, sum by (menu_item) (forno_items_sold_total))", "legendFormat": "{{menu_item}}", "refId": "A", "instant": true }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "color": { "mode": "continuous-GrYlRd" } } },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "showUnfilled": true, "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 17, "type": "piechart", "title": "Remakes by reason",
+      "description": "burnt / dropped / wrong-item. The RemakeRateHigh alert fires at 10% of pizzas sold.",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 31 },
+      "targets": [{ "expr": "sum by (reason) (increase(forno_remakes_total[1h]))", "legendFormat": "{{reason}}", "refId": "A", "instant": true }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "legend": { "displayMode": "list", "placement": "right" }, "pieType": "donut", "displayLabels": ["percent"] }
+    },
+    {
+      "id": 18, "type": "timeseries", "title": "Open orders by channel",
+      "description": "Placed but not yet in a terminal state. Climbing with no matching climb in orders served means the kitchen or floor is falling behind, not that the pizzeria got busier.",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 31 },
+      "targets": [{ "expr": "forno_orders_open", "legendFormat": "{{channel}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "custom": { "fillOpacity": 40, "lineWidth": 1, "stacking": { "mode": "normal", "group": "A" } } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    }
+  ]
+}

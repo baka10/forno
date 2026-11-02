@@ -1,0 +1,100 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="group_0" value="Consume side — effectively-once" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d79b00;fontColor=#d79b00;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1256" y="6" width="798" height="168" as="geometry"/>
+        </mxCell>
+        <mxCell id="group_1" value="Publish side — at-least-once" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;fontColor=#82b366;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="656" y="46" width="598" height="98" as="geometry"/>
+        </mxCell>
+        <mxCell id="group_2" value="Write side — the dual-write problem" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;fontColor=#6c8ebf;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="46" width="638" height="98" as="geometry"/>
+        </mxCell>
+        <mxCell id="tx_begin" value="BEGIN" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="group_2">
+          <mxGeometry x="24" y="24" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="tx_agg" value="aggregate rows" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="group_2">
+          <mxGeometry x="164" y="24" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="tx_obx" value="outbox row" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="group_2">
+          <mxGeometry x="334" y="24" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="tx_commit" value="COMMIT" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="group_2">
+          <mxGeometry x="514" y="24" width="100" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="poll" value="relay polls&#xa;FOR UPDATE SKIP LOCKED" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_1">
+          <mxGeometry x="24" y="24" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="pub" value="produce to Redpanda" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#9673A6;strokeColor=#6E4A7E;" vertex="1" parent="group_1">
+          <mxGeometry x="234" y="24" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="mark" value="mark sent_at" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_1">
+          <mxGeometry x="434" y="24" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="recv" value="consume" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_0">
+          <mxGeometry x="24" y="64" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="inbox" value="INSERT processed_events&#xa;ON CONFLICT DO NOTHING" style="shape=rhombus;whiteSpace=wrap;html=1;fillColor=#D6B656;strokeColor=#A38214;fontColor=#000000;" vertex="1" parent="group_0">
+          <mxGeometry x="184" y="44" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="skip" value="skip, count,&#xa;commit offset" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#B85450;strokeColor=#8C3F3C;" vertex="1" parent="group_0">
+          <mxGeometry x="434" y="94" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="apply" value="apply to read model&#xa;(same transaction)" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="group_0">
+          <mxGeometry x="424" y="24" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="commit2" value="commit offset" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_0">
+          <mxGeometry x="634" y="24" width="140" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="retry" value="retry with backoff" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D6B656;strokeColor=#A38214;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1880" y="200" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="dlq" value="DLQ topic&#xa;+ classification" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#B85450;strokeColor=#8C3F3C;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="2070" y="190" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="" style="html=1;rounded=0;" edge="1" parent="1" source="tx_begin" target="tx_agg">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="130" y="90"/><mxPoint x="160" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="" style="html=1;rounded=0;" edge="1" parent="1" source="tx_agg" target="tx_obx">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="310" y="90"/><mxPoint x="330" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;rounded=0;" edge="1" parent="1" source="tx_obx" target="tx_commit">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="480" y="90"/><mxPoint x="510" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="" style="html=1;rounded=0;" edge="1" parent="1" source="tx_commit" target="poll">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="620" y="90"/><mxPoint x="670" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="html=1;rounded=0;" edge="1" parent="1" source="poll" target="pub">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="860" y="90"/><mxPoint x="880" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pub" target="mark">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1050" y="90"/><mxPoint x="1080" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="html=1;rounded=0;" edge="1" parent="1" source="mark" target="recv">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1230" y="90"/><mxPoint x="1270" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="html=1;rounded=0;" edge="1" parent="1" source="recv" target="inbox">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1400" y="90"/><mxPoint x="1430" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="0 rows — duplicate" style="html=1;rounded=0;" edge="1" parent="1" source="inbox" target="skip">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1640" y="120"/><mxPoint x="1680" y="120"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="1 row — first time" style="html=1;rounded=0;" edge="1" parent="1" source="inbox" target="apply">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1640" y="60"/><mxPoint x="1670" y="60"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="" style="html=1;rounded=0;" edge="1" parent="1" source="apply" target="commit2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1850" y="60"/><mxPoint x="1880" y="60"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="unhandled error" style="dashed=1;html=1;endArrow=block;" edge="1" parent="1" source="apply" target="retry">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1840" y="130"/><mxPoint x="1840" y="220"/><mxPoint x="1840" y="220"/><mxPoint x="1840" y="220"/><mxPoint x="1870" y="220"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="exhausted" style="dashed=1;html=1;endArrow=block;" edge="1" parent="1" source="retry" target="dlq">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="2030" y="220"/><mxPoint x="2060" y="220"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

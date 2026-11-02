@@ -1,0 +1,209 @@
+# Profiles match docs/architecture.md "Deployment topology":
+#   make up   = docker compose --profile core --profile observability up
+#   make demo = docker compose --profile core --profile sim up
+#
+# `api`, `outbox-relay` and the two projectors are the SAME image, invoked with
+# different commands (docs/architecture.md "Why one image with three roles").
+
+x-forno-image: &forno-image
+  build:
+    context: .
+    target: dev
+  # Optional: a fresh clone (and CI) has no .env — everything the containers
+  # need is set right below; .env only adds local overrides.
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    FORNO_DATABASE_URL: postgresql+asyncpg://forno:forno@postgres:5432/forno
+    FORNO_KAFKA_BOOTSTRAP: redpanda:9092
+    # Domain seconds per wall-clock second (ADR-0009). `make demo`/`make live`
+    # set TIME_SCALE from the scenario file; a hand-driven `make up` is real time.
+    FORNO_TIME_SCALE: ${TIME_SCALE:-1}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redpanda:
+      condition: service_healthy
+  profiles: ["core"]
+
+services:
+  # --- State -------------------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: forno
+      POSTGRES_PASSWORD: forno
+      POSTGRES_DB: forno
+    ports: ["5432:5432"]
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forno"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    profiles: ["core"]
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.18
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 512M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+    ports:
+      - "19092:19092"
+      - "18082:18082"
+      - "9644:9644"
+    volumes:
+      - rp-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    profiles: ["core"]
+
+  # --- Edge + workers, same image, different commands ---------------------
+
+  migrate:
+    <<: *forno-image
+    command: ["migrate"]
+    restart: "no"
+
+  api:
+    <<: *forno-image
+    command: ["serve", "--reload"]
+    # `dev` bakes a code copy at build time; bind-mount the source tree over
+    # it so edits on the host take effect without a rebuild — that's what
+    # --reload has to watch. Everything else (.venv, deps) stays image-baked.
+    volumes:
+      - ./src:/app/src
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redpanda: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  outbox-relay:
+    <<: *forno-image
+    command: ["relay"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  projector-kitchen:
+    <<: *forno-image
+    command: ["project", "kitchen"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  projector-stats:
+    <<: *forno-image
+    command: ["project", "stats"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  # --- Observability --------------------------------------------------------
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    volumes:
+      - ./deploy/prometheus:/etc/prometheus:ro
+      - prom-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-lifecycle
+    ports: ["9090:9090"]
+    profiles: ["observability"]
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - graf-data:/var/lib/grafana
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+    profiles: ["observability"]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    volumes:
+      - ./deploy/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports: ["9093:9093"]
+    profiles: ["observability"]
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.8.2
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    ports: ["8080:8080"]
+    depends_on:
+      redpanda: { condition: service_healthy }
+    profiles: ["observability"]
+
+  # Auto-connected to `postgres` on first load — no password prompt. See
+  # deploy/pgadmin/README.md for why the entrypoint does a copy+chmod dance.
+  pgadmin:
+    image: dpage/pgadmin4:9.16
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@forno.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cp /pgadmin4-config/pgpass /tmp/pgpass
+        chmod 600 /tmp/pgpass
+        export PGPASSFILE=/tmp/pgpass
+        exec /entrypoint.sh
+    volumes:
+      - ./deploy/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./deploy/pgadmin/pgpass:/pgadmin4-config/pgpass:ro
+    ports: ["5050:80"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    profiles: ["observability"]
+
+  # --- Simulator: external client, own image, no shared code ---------------
+
+  simulator:
+    build:
+      context: .
+      dockerfile: simulator/Dockerfile
+    environment:
+      FORNO_SIM_API_URL: http://api:8000
+      FORNO_SIM_SCENARIO: ${SCENARIO:-busy-friday}
+      FORNO_SIM_SEED: ${SEED:-42}
+      FORNO_SIM_DURATION_MINUTES: ${DURATION:-}
+    volumes:
+      - ./scenarios:/scenarios:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    profiles: ["sim"]
+
+volumes:
+  pg-data:
+  rp-data:
+  prom-data:
+  graf-data:

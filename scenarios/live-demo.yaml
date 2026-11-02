@@ -1,0 +1,66 @@
+# Real-time, open-ended demo scenario: time_scale 1 means no fast-forward —
+# a domain minute is a wall-clock minute. Intended for `make live`, not
+# `make demo` (no `expect` block: there is no "end of run" to score against).
+# See docs/configuration.md "Scenario schema" and docs/simulator.md "Running it".
+
+name: live-demo
+description: >
+  A steadily busy trattoria, running in real time until stopped. Built for
+  watching Grafana, not for CI.
+
+pizzeria:
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 4, bake_seconds: 480 }
+    - { name: deck-2, slots: 4, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 2, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 2, waiters: 2 }
+
+  tables:
+    - { number: 1, seats: 2 }
+    - { number: 2, seats: 2 }
+    - { number: 3, seats: 4 }
+    - { number: 4, seats: 4 }
+    - { number: 5, seats: 2 }
+    - { number: 6, seats: 6 }
+    - { number: 7, seats: 4 }
+    - { number: 8, seats: 2 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "32.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.20 }
+    - { sku: diavola, name: Diavola, price: "38.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.14 }
+    - { sku: calzone, name: Calzone, price: "41.00", vat: "0.08", prep_seconds: 240, bake_seconds: 720, popularity: 0.05 }
+    - { sku: quattro-stagioni, name: Quattro Stagioni, price: "42.00", vat: "0.08", prep_seconds: 160, bake_seconds: 500, popularity: 0.09 }
+    - { sku: funghi, name: Funghi, price: "36.00", vat: "0.08", prep_seconds: 130, bake_seconds: 480, popularity: 0.08 }
+    - { sku: prosciutto-rucola, name: Prosciutto e Rucola, price: "40.00", vat: "0.08", prep_seconds: 150, bake_seconds: 480, popularity: 0.09 }
+    - { sku: vegetariana, name: Vegetariana, price: "35.00", vat: "0.08", prep_seconds: 150, bake_seconds: 480, popularity: 0.07 }
+    - { sku: quattro-formaggi, name: Quattro Formaggi, price: "39.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.08 }
+    - { sku: capricciosa, name: Capricciosa, price: "41.00", vat: "0.08", prep_seconds: 170, bake_seconds: 500, popularity: 0.06 }
+    - { sku: hawaiiana, name: Hawaiiana, price: "34.00", vat: "0.08", prep_seconds: 130, bake_seconds: 480, popularity: 0.05 }
+    - { sku: bianca, name: Bianca, price: "33.00", vat: "0.08", prep_seconds: 110, bake_seconds: 460, popularity: 0.04 }
+    - { sku: tonno-cipolla, name: Tonno e Cipolla, price: "37.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.05 }
+
+simulation:
+  seed: 42
+  duration_minutes: 0   # run until stopped (SIGINT/SIGTERM) — see simulator/__main__.py
+  time_scale: 1          # real time: no fast-forward
+
+  arrivals:
+    model: poisson
+    per_hour: 18
+
+  parties:
+    size_weights: { 1: 0.20, 2: 0.40, 3: 0.15, 4: 0.20, 6: 0.05 }
+    takeaway_ratio: 0.20
+
+  behaviour:
+    deliberation_seconds: { min: 60, max: 240 }
+    remake_rate: 0.03
+    walkout_after_seconds: 1800
+    double_submit_rate: 0.02

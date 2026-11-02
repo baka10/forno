@@ -1,0 +1,21 @@
+# Minimal routing so `page` vs `ticket` severities are visibly distinct.
+# No real notification integration is wired up — this is a portfolio stack,
+# not a paging system. Wire a `slack_configs`/`webhook_configs` receiver here
+# to make alerts land somewhere real.
+
+route:
+  group_by: ["alertname"]
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: default
+  routes:
+    - matchers: ["severity = page"]
+      receiver: page
+    - matchers: ["severity = ticket"]
+      receiver: ticket
+
+receivers:
+  - name: default
+  - name: page
+  - name: ticket

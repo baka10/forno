@@ -1,0 +1,55 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="http" value="adapters/http&#xa;routers, exception mapping, SSE" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="msg" value="adapters/messaging&#xa;relay, consumers, inbox" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="240" y="0" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="db" value="adapters/db&#xa;SQLAlchemy, repositories, UoW" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="1">
+          <mxGeometry x="240" y="190" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="app" value="application&#xa;use cases — one transaction each" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="240" y="100" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dom" value="domain&#xa;entities, value objects, FSM, ports" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#347D39;strokeColor=#2B6A30;" vertex="1" parent="1">
+          <mxGeometry x="170" y="290" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="con" value="contracts&#xa;versioned wire DTOs" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#9673A6;strokeColor=#6E4A7E;" vertex="1" parent="1">
+          <mxGeometry x="20" y="100" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="" style="html=1;rounded=0;" edge="1" parent="1" source="http" target="app">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="230" y="40"/><mxPoint x="230" y="40"/><mxPoint x="230" y="40"/><mxPoint x="230" y="40"/><mxPoint x="230" y="130"/><mxPoint x="230" y="130"/><mxPoint x="230" y="130"/><mxPoint x="230" y="130"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="" style="html=1;rounded=0;" edge="1" parent="1" source="msg" target="app">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="350" y="60"/><mxPoint x="350" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;rounded=0;" edge="1" parent="1" source="app" target="dom">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="240" y="140"/><mxPoint x="230" y="140"/><mxPoint x="230" y="140"/><mxPoint x="230" y="140"/><mxPoint x="230" y="280"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="" style="html=1;rounded=0;" edge="1" parent="1" source="app" target="db">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="350" y="160"/><mxPoint x="350" y="180"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="html=1;rounded=0;" edge="1" parent="1" source="http" target="con">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="60"/><mxPoint x="120" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="html=1;rounded=0;" edge="1" parent="1" source="msg" target="con">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="230" y="30"/><mxPoint x="220" y="30"/><mxPoint x="220" y="30"/><mxPoint x="220" y="30"/><mxPoint x="220" y="110"/><mxPoint x="220" y="110"/><mxPoint x="220" y="110"/><mxPoint x="220" y="110"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="html=1;rounded=0;" edge="1" parent="1" source="db" target="dom">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="290" y="250"/><mxPoint x="290" y="280"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="FORBIDDEN" style="endArrow=block;dashed=1;html=1;strokeColor=#B85450;fontColor=#B85450;" edge="1" parent="1" source="dom" target="db">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="340" y="290"/><mxPoint x="340" y="260"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="FORBIDDEN" style="endArrow=block;dashed=1;html=1;strokeColor=#B85450;fontColor=#B85450;" edge="1" parent="1" source="dom" target="http">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="230" y="210"/><mxPoint x="230" y="10"/><mxPoint x="230" y="10"/><mxPoint x="230" y="10"/><mxPoint x="230" y="10"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,155 @@
+{
+  "title": "Service Health",
+  "uid": "forno-service-health",
+  "description": "What an engineer watches: the SLO and its error budget, the outbox → broker → projector pipeline, and RED for the API.",
+  "tags": ["forno"],
+  "timezone": "utc",
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "schemaVersion": 39,
+  "links": [
+    { "title": "Kitchen Ops", "type": "link", "url": "/d/forno-kitchen-ops", "icon": "dashboard" }
+  ],
+  "panels": [
+    {
+      "id": 1, "type": "row", "title": "SLO — 95% of orders ready no later than promised",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2, "type": "gauge", "title": "SLI (5m)",
+      "description": "Share of orders ready on time over the last 5 minutes. Same recording rule the page alert uses.",
+      "gridPos": { "h": 6, "w": 5, "x": 0, "y": 1 },
+      "targets": [{ "expr": "forno:promise_met:ratio_rate5m", "legendFormat": "SLI", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0.5, "max": 1, "thresholds": { "mode": "absolute", "steps": [
+        { "color": "red", "value": null },
+        { "color": "orange", "value": 0.9 },
+        { "color": "green", "value": 0.95 }
+      ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true }
+    },
+    {
+      "id": 3, "type": "gauge", "title": "Error budget left (30d)",
+      "description": "1 − breaches / allowed breaches over the 30-day window. 0% means every late order from here on is an SLO violation.",
+      "gridPos": { "h": 6, "w": 5, "x": 5, "y": 1 },
+      "targets": [{ "expr": "clamp_min(1 - (1 - forno:promise_met:ratio_rate30d) / 0.05, 0)", "legendFormat": "budget left", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "thresholds": { "mode": "absolute", "steps": [
+        { "color": "red", "value": null },
+        { "color": "orange", "value": 0.25 },
+        { "color": "green", "value": 0.5 }
+      ] } } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true }
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Burn rate by window vs. alert thresholds",
+      "description": "Burn multiple = breach rate / allowed breach rate (5%). The PromiseBudgetBurnFast page fires at 14.4× on both the 5m and 1h windows; the ticket at 6× on 30m and 6h.",
+      "gridPos": { "h": 6, "w": 14, "x": 10, "y": 1 },
+      "targets": [
+        { "expr": "(1 - forno:promise_met:ratio_rate5m) / 0.05", "legendFormat": "5m", "refId": "A" },
+        { "expr": "(1 - forno:promise_met:ratio_rate30m) / 0.05", "legendFormat": "30m", "refId": "B" },
+        { "expr": "(1 - forno:promise_met:ratio_rate1h) / 0.05", "legendFormat": "1h", "refId": "C" },
+        { "expr": "(1 - forno:promise_met:ratio_rate6h) / 0.05", "legendFormat": "6h", "refId": "D" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 1, "min": 0, "custom": { "fillOpacity": 5, "lineWidth": 2, "thresholdsStyle": { "mode": "dashed+area" } },
+        "thresholds": { "mode": "absolute", "steps": [
+          { "color": "transparent", "value": null },
+          { "color": "orange", "value": 6 },
+          { "color": "red", "value": 14.4 }
+        ] } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 5, "type": "row", "title": "Pipeline — outbox → Redpanda → projectors → SSE",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 }
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Outbox lag and pending",
+      "description": "Age of the oldest unsent row (the leading indicator for the whole system) and how many rows wait. Dashed line: the 30s OutboxLagHigh alert threshold.",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "forno_outbox_lag_seconds", "legendFormat": "lag (s)", "refId": "A" },
+        { "expr": "forno_outbox_pending", "legendFormat": "pending rows", "refId": "B" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "custom": { "fillOpacity": 10, "lineWidth": 2, "thresholdsStyle": { "mode": "dashed" } },
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "transparent", "value": null }, { "color": "red", "value": 30 } ] } },
+        "overrides": [ { "matcher": { "id": "byName", "options": "lag (s)" }, "properties": [ { "id": "unit", "value": "s" } ] } ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Consumer lag by group",
+      "description": "High-water mark minus committed offset, per projector and partition. Non-zero and climbing means a projector cannot keep up.",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "targets": [{ "expr": "forno_consumer_lag_messages", "legendFormat": "{{group}} {{topic}}/{{partition}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "custom": { "fillOpacity": 10, "lineWidth": 2 } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Projection lag",
+      "description": "Event occurred_at → applied to the read model. What a chef looking at the ticket board actually feels. Dashed line: the 60s ProjectionLagHigh alert threshold.",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "targets": [{ "expr": "forno_projection_lag_seconds", "legendFormat": "{{projector}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "fillOpacity": 10, "lineWidth": 2, "thresholdsStyle": { "mode": "dashed" } },
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "transparent", "value": null }, { "color": "red", "value": 60 } ] } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "Events consumed by result",
+      "description": "applied / duplicate / failed, per second. A non-zero, harmless 'duplicate' line is the visual proof the inbox turns at-least-once delivery into exactly-once effects.",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "targets": [{ "expr": "sum by (result) (rate(forno_events_consumed_total[2m]))", "legendFormat": "{{result}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "failed" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] },
+          { "matcher": { "id": "byName", "options": "duplicate" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "yellow" } } ] }
+        ] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 10, "type": "timeseries", "title": "Dead-letter queue by classification",
+      "description": "retryable / poison / caller_error — three different human responses. Anything here is a page.",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+      "targets": [{ "expr": "sum by (classification) (increase(forno_dlq_messages_total[15m]))", "legendFormat": "{{classification}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "custom": { "fillOpacity": 30, "lineWidth": 1, "drawStyle": "bars" } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 11, "type": "stat", "title": "Edge guarantees",
+      "description": "Double-submits absorbed by Idempotency-Key (15m), live SSE subscribers, and subscribers dropped for being too slow (15m).",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "targets": [
+        { "expr": "sum(increase(forno_idempotency_replays_total[15m]))", "legendFormat": "double-submits absorbed", "refId": "A" },
+        { "expr": "sum(forno_sse_connections)", "legendFormat": "SSE subscribers", "refId": "B" },
+        { "expr": "sum(increase(forno_sse_dropped_total[15m]))", "legendFormat": "slow SSE clients dropped", "refId": "C" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 0, "color": { "mode": "fixed", "fixedColor": "blue" } },
+        "overrides": [ { "matcher": { "id": "byName", "options": "slow SSE clients dropped" }, "properties": [ { "id": "thresholds", "value": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } }, { "id": "color", "value": { "mode": "thresholds" } } ] } ] },
+      "options": { "colorMode": "value", "graphMode": "none", "orientation": "vertical", "textMode": "value_and_name", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 12, "type": "row", "title": "RED — API rate, errors, duration",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 }
+    },
+    {
+      "id": 13, "type": "timeseries", "title": "Request rate by route",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 25 },
+      "targets": [{ "expr": "sum by (handler) (rate(http_requests_total{handler!~\"/metrics|/health/.*\"}[2m]))", "legendFormat": "{{handler}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "fillOpacity": 40, "lineWidth": 1, "stacking": { "mode": "normal", "group": "A" } } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 14, "type": "timeseries", "title": "Error ratio (5xx)",
+      "description": "4xx are the contract doing its job (409 on an illegal transition, 422 on a full oven); only 5xx count. Dashed line: the 1% ApiErrorRate alert threshold.",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 25 },
+      "targets": [{ "expr": "(sum(rate(http_requests_total{status=\"5xx\"}[2m])) or vector(0)) / (sum(rate(http_requests_total[2m])) > 0)", "legendFormat": "5xx ratio", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "custom": { "fillOpacity": 20, "lineWidth": 2, "thresholdsStyle": { "mode": "dashed" } },
+        "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 0.01 } ] }, "color": { "mode": "thresholds" } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    },
+    {
+      "id": 15, "type": "timeseries", "title": "Latency p95 by route",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 25 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, handler) (rate(http_request_duration_seconds_bucket{handler!~\"/metrics|/health/.*|/streams/.*\"}[2m])))", "legendFormat": "{{handler}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "fillOpacity": 5, "lineWidth": 1 } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } }
+    }
+  ]
+}

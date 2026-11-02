@@ -1,0 +1,79 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="group_0" value="Every process" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;fontColor=#6c8ebf;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="76" width="598" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="CID" value="correlation_id" style="ellipse;html=1;fillColor=#D6B656;strokeColor=#A38214;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="240" y="0" width="130" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="M" value="prometheus_client&#xa;registry" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#67AB49;strokeColor=#4C8033;" vertex="1" parent="group_0">
+          <mxGeometry x="24" y="24" width="170" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="L" value="structlog&#xa;JSON to stdout" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_0">
+          <mxGeometry x="214" y="24" width="170" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="T" value="OTel SDK&#xa;(optional profile)" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="group_0">
+          <mxGeometry x="404" y="24" width="170" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="PROM" value="Prometheus" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#67AB49;strokeColor=#4C8033;" vertex="1" parent="1">
+          <mxGeometry x="50" y="190" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="REC" value="recording rules&#xa;SLI pre-computed" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#67AB49;strokeColor=#4C8033;" vertex="1" parent="1">
+          <mxGeometry x="50" y="280" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="GRAF" value="Grafana" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#67AB49;strokeColor=#4C8033;" vertex="1" parent="1">
+          <mxGeometry x="260" y="360" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="AL" value="alert rules&#xa;multi-burn-rate" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D6B656;strokeColor=#A38214;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="50" y="360" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="AM" value="Alertmanager" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#B85450;strokeColor=#8C3F3C;" vertex="1" parent="1">
+          <mxGeometry x="60" y="450" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="STDOUT" value="docker logs / Loki" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="1">
+          <mxGeometry x="220" y="190" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="TEMPO" value="Tempo" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="1">
+          <mxGeometry x="330" y="450" width="130" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="" style="dashed=1;html=1;endArrow=open;" edge="1" parent="1" source="CID" target="M">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="190" y="30"/><mxPoint x="120" y="30"/><mxPoint x="120" y="30"/><mxPoint x="120" y="30"/><mxPoint x="120" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="" style="html=1;rounded=0;" edge="1" parent="1" source="CID" target="L">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="60"/><mxPoint x="300" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;rounded=0;" edge="1" parent="1" source="CID" target="T">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="420" y="30"/><mxPoint x="490" y="30"/><mxPoint x="490" y="30"/><mxPoint x="490" y="30"/><mxPoint x="490" y="90"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="scrape 5s" style="html=1;rounded=0;" edge="1" parent="1" source="M" target="PROM">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="160"/><mxPoint x="120" y="180"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="html=1;rounded=0;" edge="1" parent="1" source="PROM" target="REC">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="130" y="240"/><mxPoint x="130" y="270"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="html=1;rounded=0;" edge="1" parent="1" source="REC" target="GRAF">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="300"/><mxPoint x="320" y="300"/><mxPoint x="320" y="300"/><mxPoint x="320" y="300"/><mxPoint x="320" y="350"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="html=1;rounded=0;" edge="1" parent="1" source="REC" target="AL">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="140" y="330"/><mxPoint x="140" y="350"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="html=1;rounded=0;" edge="1" parent="1" source="AL" target="AM">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="140" y="410"/><mxPoint x="140" y="440"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="" style="html=1;rounded=0;" edge="1" parent="1" source="L" target="STDOUT">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="160"/><mxPoint x="300" y="180"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="" style="html=1;rounded=0;" edge="1" parent="1" source="T" target="TEMPO">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="440" y="160"/><mxPoint x="440" y="440"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="exemplars" style="dashed=1;html=1;endArrow=open;" edge="1" parent="1" source="GRAF" target="TEMPO">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="370" y="410"/><mxPoint x="370" y="440"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

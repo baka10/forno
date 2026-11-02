@@ -1,0 +1,83 @@
+# See CONTRIBUTING.md "CI pipeline". Six stages, each gating the next:
+# fast gate -> integration -> contract -> build -> smoke -> system invariants.
+# The split exists because feedback latency shapes behaviour — a 30s gate
+# gets run before every commit; an 8-minute one does not.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  UV_VERSION: "0.5"
+
+jobs:
+  fast-gate:
+    name: fast gate (format · lint · mypy · import-linter · domain tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with: { version: "${{ env.UV_VERSION }}" }
+      - run: uv sync --all-extras
+      - run: make test
+
+  integration:
+    name: "integration (testcontainers: postgres + redpanda)"
+    needs: fast-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with: { version: "${{ env.UV_VERSION }}" }
+      - run: uv sync --all-extras
+      - run: make test-integration
+
+  contract:
+    name: contract (OpenAPI + AsyncAPI conformance and diff)
+    needs: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with: { version: "${{ env.UV_VERSION }}" }
+      - run: uv sync --all-extras
+      - run: uv run pytest tests/contract -m contract -q
+
+  build:
+    name: build (multi-arch image · SBOM · trivy scan)
+    needs: contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker build --target prod -t forno:ci .
+      # SBOM / trivy scan: not yet wired up.
+
+  smoke:
+    name: smoke (compose up, health)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # `make up` is gated on `make test`, which needs uv on the runner.
+      - uses: astral-sh/setup-uv@v3
+        with: { version: "${{ env.UV_VERSION }}" }
+      - run: uv sync --all-extras
+      - run: make up
+      - run: |
+          timeout 60 bash -c 'until curl -sf localhost:8000/health/ready; do sleep 2; done'
+      - run: make down
+
+  system-invariants:
+    name: system invariants (make demo — see docs/simulator.md "The shadow ledger")
+    needs: smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The scenario's own duration (120 domain minutes at 120x ≈ 1 wall
+      # minute): a 20-minute cut-off serves one or two orders and makes the
+      # breach-rate band meaningless.
+      - run: make demo SCENARIO=busy-friday SEED=42

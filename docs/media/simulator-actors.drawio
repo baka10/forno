@@ -1,0 +1,64 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="group_0" value="simulator process — one asyncio task per actor" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;fontColor=#6c8ebf;verticalAlign=top;fontStyle=2;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="6" y="6" width="838" height="238" as="geometry"/>
+        </mxCell>
+        <mxCell id="MGR" value="ManagerActor x1" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#083F75;strokeColor=#06315C;" vertex="1" parent="group_0">
+          <mxGeometry x="24" y="164" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="GEN" value="ArrivalGenerator" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#23A2D9;strokeColor=#0E7DAD;" vertex="1" parent="group_0">
+          <mxGeometry x="24" y="94" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="CUST" value="CustomerActor xN" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="group_0">
+          <mxGeometry x="234" y="94" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="CASH" value="CashierActor xc" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="group_0">
+          <mxGeometry x="434" y="94" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="CHEF" value="ChefActor xk" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="group_0">
+          <mxGeometry x="434" y="164" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="WAIT" value="WaiterActor xw" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#8C8496;strokeColor=#736782;" vertex="1" parent="group_0">
+          <mxGeometry x="434" y="24" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="LEDGER" value="ShadowLedger&#xa;observation only" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#D6B656;strokeColor=#A38214;fontColor=#000000;" vertex="1" parent="group_0">
+          <mxGeometry x="644" y="84" width="170" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="API" value="Forno API" style="rounded=1;whiteSpace=wrap;html=1;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="650" y="270" width="170" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="REST + SSE" style="html=1;rounded=0;" edge="1" parent="1" source="MGR" target="API">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="120" y="250"/><mxPoint x="120" y="300"/><mxPoint x="120" y="300"/><mxPoint x="120" y="300"/><mxPoint x="640" y="300"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="spawns" style="html=1;rounded=0;" edge="1" parent="1" source="GEN" target="CUST">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="200" y="120"/><mxPoint x="230" y="120"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;rounded=0;" edge="1" parent="1" source="CUST" target="CASH">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="410" y="120"/><mxPoint x="430" y="120"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="REST" style="html=1;rounded=0;" edge="1" parent="1" source="CASH" target="API">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="620" y="130"/><mxPoint x="630" y="130"/><mxPoint x="630" y="130"/><mxPoint x="630" y="130"/><mxPoint x="630" y="290"/><mxPoint x="630" y="290"/><mxPoint x="630" y="290"/><mxPoint x="640" y="290"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="REST (poll)" style="html=1;rounded=0;" edge="1" parent="1" source="CHEF" target="API">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="660" y="200"/><mxPoint x="710" y="200"/><mxPoint x="710" y="200"/><mxPoint x="710" y="200"/><mxPoint x="710" y="260"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="REST + SSE" style="html=1;rounded=0;" edge="1" parent="1" source="WAIT" target="API">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="630" y="70"/><mxPoint x="640" y="70"/><mxPoint x="640" y="70"/><mxPoint x="640" y="70"/><mxPoint x="640" y="280"/><mxPoint x="640" y="280"/><mxPoint x="640" y="280"/><mxPoint x="640" y="280"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="dashed=1;html=1;endArrow=open;" edge="1" parent="1" source="CASH" target="LEDGER">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="610" y="120"/><mxPoint x="640" y="120"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="dashed=1;html=1;endArrow=open;" edge="1" parent="1" source="CHEF" target="LEDGER">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="680" y="180"/><mxPoint x="760" y="180"/><mxPoint x="760" y="180"/><mxPoint x="760" y="180"/><mxPoint x="760" y="170"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="every request + event" style="dashed=1;html=1;endArrow=open;" edge="1" parent="1" source="WAIT" target="LEDGER">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="670" y="50"/><mxPoint x="730" y="50"/><mxPoint x="730" y="50"/><mxPoint x="730" y="50"/><mxPoint x="730" y="80"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

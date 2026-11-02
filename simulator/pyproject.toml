@@ -1,0 +1,57 @@
+# Deliberately separate from the root pyproject.toml: the simulator is an
+# external client (docs/adr/0008-simulator-as-external-client.md) and must not
+# depend on anything that would let it import `forno` by accident.
+
+[project]
+name = "forno-simulator"
+version = "0.1.0"
+description = "External-client demo, load generator, and system-level property test for Forno."
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "httpx-sse>=0.4",
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+    "structlog>=24.4",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "mypy>=1.13", "ruff>=0.7", "types-PyYAML>=6.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+# --- Quality gates -----------------------------------------------------------
+# Mirrors the root pyproject.toml's [tool.ruff] (line-length, target-version,
+# select = ALL, base ignores) so `simulator/` is held to the same bar as the
+# rest of the repo. This section exists only because ruff uses the *closest*
+# pyproject.toml found by walking up from the file being linted, and stops
+# using it as soon as it finds one — a bare `simulator/pyproject.toml` with no
+# [tool.ruff] table would make ruff keep walking up and pick up the root
+# table instead, silently reinterpreting the per-file-ignores below.
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",       # docstrings are opt-in here, not mandatory (CONTRIBUTING.md: "why", not "what")
+    "COM812",  # conflicts with ruff format
+    "ISC001",  # conflicts with ruff format
+    "S311",    # random.Random is for reproducible simulation seeding throughout this package,
+               # never for cryptography or security — see docs/simulator.md "Determinism"
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Standard pytest idioms, not defects: `assert` is the point of a test,
+# comparing to a literal status code/count is what the test is verifying, a
+# mock handler's unused `request` argument still has to be declared because
+# httpx.MockTransport dictates the signature, and reaching into `_private`
+# attributes is how these tests observe actor-internal state without a
+# public accessor built just for testing.
+"tests/*" = ["S101", "PLR2004", "ARG001", "ARG005", "SLF001"]

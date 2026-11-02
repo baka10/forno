@@ -1,0 +1,74 @@
+# Half the oven capacity mid-service. Demonstrates graceful degradation:
+# promises lengthen, nothing is lost, breach rate climbs and recovers.
+# See docs/configuration.md "Bundled scenarios".
+
+name: oven-down
+description: >
+  Full busy-friday capacity, except deck-2 goes offline 40 minutes into service.
+
+pizzeria:
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 8, bake_seconds: 480 }
+    - { name: deck-2, slots: 6, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 2, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 3, waiters: 2 }
+
+  tables:
+    - { number: 1, seats: 4 }
+    - { number: 2, seats: 2 }
+    - { number: 3, seats: 4 }
+    - { number: 4, seats: 4 }
+    - { number: 5, seats: 2 }
+    - { number: 6, seats: 6 }
+    - { number: 7, seats: 4 }
+    - { number: 8, seats: 2 }
+    - { number: 9, seats: 4 }
+    - { number: 10, seats: 4 }
+    - { number: 11, seats: 2 }
+    - { number: 12, seats: 4 }
+    - { number: 13, seats: 6 }
+    - { number: 14, seats: 2 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "32.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.35 }
+    - { sku: diavola, name: Diavola, price: "38.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.25 }
+    - { sku: calzone, name: Calzone, price: "41.00", vat: "0.08", prep_seconds: 240, bake_seconds: 720, popularity: 0.10 }
+    - { sku: quattro-stagioni, name: Quattro Stagioni, price: "42.00", vat: "0.08", prep_seconds: 160, bake_seconds: 500, popularity: 0.15 }
+    - { sku: funghi, name: Funghi, price: "36.00", vat: "0.08", prep_seconds: 130, bake_seconds: 480, popularity: 0.15 }
+
+simulation:
+  seed: 42
+  duration_minutes: 120
+  time_scale: 60
+
+  arrivals: # identical to busy-friday
+    model: poisson
+    per_hour: 14
+    rush: { at: "19:00", duration_minutes: 45, multiplier: 1.5 }
+
+  parties:
+    size_weights: { 1: 0.15, 2: 0.40, 3: 0.15, 4: 0.20, 6: 0.10 }
+    takeaway_ratio: 0.25
+
+  behaviour:
+    deliberation_seconds: { min: 60, max: 300 }
+    remake_rate: 0.03
+    walkout_after_seconds: 1500
+    double_submit_rate: 0.02
+
+  # Simulator-only fault injection. `forno/domain` never sees this key either —
+  # the manager actor calls a management endpoint at the given offset, exactly
+  # as an owner reporting a broken oven would.
+  faults:
+    - { at_minute: 40, action: disable_oven, oven: deck-2 }
+
+  expect: # losing 6 of 14 slots just before the rush must hurt, but not empty the room
+    breach_rate: { min: 0.05, max: 0.6 }
+    walkouts_max: 12

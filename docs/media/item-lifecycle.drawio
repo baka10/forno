@@ -1,0 +1,70 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="start" value="" style="ellipse;html=1;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="280" y="0" width="24" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="QUEUED" value="QUEUED" style="rounded=1;absoluteArcSize=1;arcSize=20;html=1;whiteSpace=wrap;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="220" y="60" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="PREPPING" value="PREPPING" style="rounded=1;absoluteArcSize=1;arcSize=20;html=1;whiteSpace=wrap;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="170" y="150" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="IN_OVEN" value="IN_OVEN" style="rounded=1;absoluteArcSize=1;arcSize=20;html=1;whiteSpace=wrap;fontColor=#ffffff;fillColor=#D79B00;strokeColor=#9C6500;" vertex="1" parent="1">
+          <mxGeometry x="60" y="230" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="READY" value="READY" style="rounded=1;absoluteArcSize=1;arcSize=20;html=1;whiteSpace=wrap;fontColor=#ffffff;fillColor=#1061B0;strokeColor=#0D5091;" vertex="1" parent="1">
+          <mxGeometry x="0" y="320" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="DELIVERED" value="DELIVERED" style="rounded=1;absoluteArcSize=1;arcSize=20;html=1;whiteSpace=wrap;fontColor=#ffffff;fillColor=#67AB49;strokeColor=#4C8033;" vertex="1" parent="1">
+          <mxGeometry x="10" y="410" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="SCRAPPED" value="SCRAPPED" style="rounded=1;absoluteArcSize=1;arcSize=20;html=1;whiteSpace=wrap;fontColor=#ffffff;fillColor=#B85450;strokeColor=#8C3F3C;" vertex="1" parent="1">
+          <mxGeometry x="170" y="320" width="150" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="remake" value="remake?" style="shape=rhombus;whiteSpace=wrap;html=1;fillColor=#D6B656;strokeColor=#A38214;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="190" y="400" width="110" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="end" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="150" y="500" width="24" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="order accepted" style="html=1;rounded=0;" edge="1" parent="1" source="start" target="QUEUED">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="290" y="20"/><mxPoint x="290" y="50"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="chef claims at prep station" style="html=1;rounded=0;" edge="1" parent="1" source="QUEUED" target="PREPPING">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="110"/><mxPoint x="270" y="140"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="oven slot allocated" style="html=1;rounded=0;" edge="1" parent="1" source="PREPPING" target="IN_OVEN">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="190" y="200"/><mxPoint x="190" y="220"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="pulled, at the pass" style="html=1;rounded=0;" edge="1" parent="1" source="IN_OVEN" target="READY">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="110" y="280"/><mxPoint x="110" y="310"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="waiter delivers" style="html=1;rounded=0;" edge="1" parent="1" source="READY" target="DELIVERED">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="80" y="370"/><mxPoint x="80" y="400"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="mis-made" style="html=1;rounded=0;" edge="1" parent="1" source="PREPPING" target="SCRAPPED">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="200"/><mxPoint x="270" y="310"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="burnt / dropped" style="html=1;rounded=0;" edge="1" parent="1" source="IN_OVEN" target="SCRAPPED">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="190" y="280"/><mxPoint x="190" y="310"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="html=1;rounded=0;" edge="1" parent="1" source="SCRAPPED" target="remake">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="240" y="370"/><mxPoint x="240" y="390"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="new item: remake_of=original,&#xa;priority=HIGH, inherits promised_at" style="html=1;rounded=0;" edge="1" parent="1" source="remake" target="QUEUED">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="320" y="430"/><mxPoint x="340" y="430"/><mxPoint x="340" y="430"/><mxPoint x="340" y="430"/><mxPoint x="340" y="120"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="manager voids the line" style="html=1;rounded=0;" edge="1" parent="1" source="remake" target="end">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="170" y="430"/><mxPoint x="160" y="430"/><mxPoint x="160" y="430"/><mxPoint x="160" y="430"/><mxPoint x="160" y="490"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="" style="html=1;rounded=0;" edge="1" parent="1" source="DELIVERED" target="end">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="150" y="460"/><mxPoint x="150" y="490"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

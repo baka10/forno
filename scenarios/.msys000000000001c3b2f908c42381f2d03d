@@ -1,0 +1,68 @@
+# The default scenario. Comfortable capacity with a 19:00 rush — the SLO should hold.
+# See docs/configuration.md "Scenario schema" — this file is the reference example.
+
+name: busy-friday
+description: >
+  A well-staffed Friday evening with a 19:00 rush. Comfortable capacity —
+  the SLO should hold.
+
+pizzeria: # → pushed through the management API. Domain capacity; forno/domain must never see the rest of this file.
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 8, bake_seconds: 480 }
+    - { name: deck-2, slots: 6, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 2, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 3, waiters: 2 }
+
+  tables:
+    - { number: 1, seats: 4 }
+    - { number: 2, seats: 2 }
+    - { number: 3, seats: 4 }
+    - { number: 4, seats: 4 }
+    - { number: 5, seats: 2 }
+    - { number: 6, seats: 6 }
+    - { number: 7, seats: 4 }
+    - { number: 8, seats: 2 }
+    - { number: 9, seats: 4 }
+    - { number: 10, seats: 4 }
+    - { number: 11, seats: 2 }
+    - { number: 12, seats: 4 }
+    - { number: 13, seats: 6 }
+    - { number: 14, seats: 2 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "32.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.35 }
+    - { sku: diavola, name: Diavola, price: "38.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.25 }
+    - { sku: calzone, name: Calzone, price: "41.00", vat: "0.08", prep_seconds: 240, bake_seconds: 720, popularity: 0.10 }
+    - { sku: quattro-stagioni, name: Quattro Stagioni, price: "42.00", vat: "0.08", prep_seconds: 160, bake_seconds: 500, popularity: 0.15 }
+    - { sku: funghi, name: Funghi, price: "36.00", vat: "0.08", prep_seconds: 130, bake_seconds: 480, popularity: 0.15 }
+
+simulation: # → simulator only, never leaves the process. forno/domain must never learn this shape exists.
+  seed: 42
+  duration_minutes: 120
+  time_scale: 60 # 480 domain seconds → 8 wall-clock seconds
+
+  arrivals:
+    model: poisson
+    per_hour: 14
+    rush: { at: "19:00", duration_minutes: 45, multiplier: 1.5 }
+
+  parties:
+    size_weights: { 1: 0.15, 2: 0.40, 3: 0.15, 4: 0.20, 6: 0.10 }
+    takeaway_ratio: 0.25
+
+  behaviour:
+    deliberation_seconds: { min: 60, max: 300 }
+    remake_rate: 0.03
+    walkout_after_seconds: 1500 # ~25 min patience — realistic for a sit-down Friday
+    double_submit_rate: 0.02 # exercises the idempotency path
+
+  expect: # the simulator asserts against these — a real Friday has a few late orders and a walkout or two
+    breach_rate: { min: 0.0, max: 0.2 }
+    walkouts_max: 4

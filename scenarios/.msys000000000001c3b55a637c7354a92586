@@ -1,0 +1,63 @@
+# Menu price raised mid-service. Asserts placed orders keep their snapshotted
+# totals — see docs/domain-model.md "Money" and simulator invariant #7.
+
+name: price-change
+description: >
+  busy-friday capacity; the margherita price rises 18:00. Every order placed
+  before that instant must keep its original total.
+
+pizzeria:
+  currency: PLN
+  fire_together_window_seconds: 90
+
+  ovens:
+    - { name: deck-1, slots: 6, bake_seconds: 480 }
+    - { name: deck-2, slots: 4, bake_seconds: 480 }
+
+  stations:
+    prep: { count: 2, seconds_per_item: 120 }
+    pass: { count: 1 }
+
+  staff: { cashiers: 1, chefs: 3, waiters: 2 }
+
+  tables:
+    - { number: 1, seats: 4 }
+    - { number: 2, seats: 2 }
+    - { number: 3, seats: 4 }
+    - { number: 4, seats: 4 }
+    - { number: 5, seats: 2 }
+    - { number: 6, seats: 6 }
+
+  menu:
+    - { sku: margherita, name: Margherita, price: "32.00", vat: "0.08", prep_seconds: 120, bake_seconds: 480, popularity: 0.5 }
+    - { sku: diavola, name: Diavola, price: "38.00", vat: "0.08", prep_seconds: 140, bake_seconds: 480, popularity: 0.3 }
+    - { sku: calzone, name: Calzone, price: "41.00", vat: "0.08", prep_seconds: 240, bake_seconds: 720, popularity: 0.2 }
+
+simulation:
+  seed: 7
+  duration_minutes: 90
+  time_scale: 60
+
+  arrivals:
+    model: poisson
+    per_hour: 8 # six tables, steady trade
+
+  parties:
+    size_weights: { 1: 0.2, 2: 0.4, 4: 0.4 }
+    takeaway_ratio: 0.2
+
+  behaviour:
+    deliberation_seconds: { min: 60, max: 240 }
+    remake_rate: 0.03
+    walkout_after_seconds: 1500
+    double_submit_rate: 0.02
+
+  # Simulator-only: the manager actor calls PATCH /menu/items/{id} at this
+  # offset. `forno/domain` never sees a schedule — it only ever sees "the
+  # price changed now", exactly as the management API delivers it.
+  menu_changes:
+    - { at_minute: 30, sku: margherita, price: "36.00" }
+
+  expect:
+    breach_rate: { min: 0.0, max: 0.2 }
+    walkouts_max: 3

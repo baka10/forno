@@ -1,0 +1,167 @@
+[project]
+name = "forno"
+version = "0.1.0"
+description = "An event-driven pizzeria operations backend — built to be run, broken, and inspected."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+dependencies = [
+    # edge
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sse-starlette>=2.1",
+    "prometheus-fastapi-instrumentator>=7.0",
+    # domain / application boundary types
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    # persistence
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    # messaging
+    "aiokafka>=0.12",
+    # observability
+    "structlog>=24.4",
+    "prometheus-client>=0.21",
+    # cross-cutting
+    "python-ulid>=3.0",
+]
+
+[project.optional-dependencies]
+# ADR-0007: the CP-SAT seam is documented, not implemented — this stays optional
+# so the base install never pulls in a solver nobody is using yet.
+scheduling = ["ortools>=9.11"]
+
+# ADR-0009 / observability.md "Tracing": optional, behind the `tracing` compose profile.
+tracing = [
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp>=1.27",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "hypothesis>=6.115",
+    "httpx>=0.27",
+    "testcontainers[postgres,kafka]>=4.8",
+    "mypy>=1.13",
+    "ruff>=0.7",
+    "import-linter>=2.1",
+    "bandit>=1.7",
+    "pip-audit>=2.7",
+    "pre-commit>=4.0",
+    "types-PyYAML>=6.0",
+    "httpx-sse>=0.4.3",
+    "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+forno = "forno.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/forno"]
+
+# --- Quality gates -----------------------------------------------------------
+# See CONTRIBUTING.md "Quality gates" for the rationale behind graduated strictness.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "simulator", "tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",       # docstrings are opt-in here, not mandatory (CONTRIBUTING.md: "why", not "what")
+    "COM812",  # conflicts with ruff format
+    "ISC001",  # conflicts with ruff format
+]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's DI style is `param = Depends(...)` in the signature by design —
+# these calls are cheap and cached per-request, not a mutable-default bug.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body", "fastapi.Path"]
+
+[tool.ruff.lint.per-file-ignores]
+# Route handlers pick up Request/Response/body/uow/clock/... via FastAPI's
+# DI — that routinely passes 5 params without being a real design smell.
+# TC001-3: several of these annotations (request bodies, enum query/path
+# params) are Pydantic/enum types FastAPI must resolve at runtime to
+# validate requests — moving them into `TYPE_CHECKING` would break that for
+# some params and not others, on a per-line basis too fragile to maintain.
+# FAST002: the non-Annotated `param = Depends(...)` style is deliberate
+# (see `flake8-bugbear.extend-immutable-calls` above) — Annotated[X,
+# Depends(y)] is not this codebase's convention.
+"src/forno/adapters/http/routers/*.py" = ["PLR0913", "TC001", "TC002", "TC003", "FAST002"]
+
+# pydantic.BaseModel field types (Decimal, datetime, UUID, enums, ...) must
+# be real imports when the class body executes — Pydantic builds its
+# validators from `get_type_hints()` at class-definition time, so a
+# `TYPE_CHECKING`-guarded import raises `NameError` on import, not just
+# under a type checker.
+"src/forno/contracts/requests.py" = ["TC001", "TC002", "TC003"]
+"src/forno/contracts/responses.py" = ["TC001", "TC002", "TC003"]
+"src/forno/contracts/events.py" = ["TC001", "TC002", "TC003"]
+
+# Pytest idiom, not a strictness gap — matches this same scoping in
+# [tool.mypy] (`strict = false` for `tests.*`/`simulator.*`). PLR2004: the
+# "magic value" in a test assertion is usually the expected value under
+# test (a computed total, a row count) — naming it a constant would just
+# relocate the number, not clarify it.
+"tests/*" = ["S101", "ANN001", "ANN201", "PLC0415", "SLF001", "PLR2004"]
+"simulator/tests/*" = ["S101", "ANN001", "ANN201", "PLC0415", "SLF001", "PLR2004"]
+
+# Alembic scripts: not a package, and env.py's imports are runtime-required
+# by Alembic's own config loading, not typing-only.
+"src/forno/adapters/db/migrations/*.py" = ["INP001"]
+
+# One image, four CLI roles (serve/relay/project/migrate) with disjoint
+# heavy dependencies (uvicorn+FastAPI, aiokafka, alembic) — `forno
+# healthcheck` runs as the Docker HEALTHCHECK every few seconds and must
+# not pay for importing any of them. Deliberate lazy import, not a
+# top-level-import oversight.
+"src/forno/__main__.py" = ["PLC0415"]
+
+# One-off operational scripts, not library code — stdout/subprocess output
+# is the point.
+"docs/media/generate-deployment-diagram.py" = ["T201", "S603"]
+"main.py" = ["T201"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+
+# `strict = true/false` is not properly scoped inside [[tool.mypy.overrides]]
+# — mypy leaks the strict-preset flags (e.g. disallow_untyped_defs) globally
+# regardless of the override's `module` glob, which silently defeated the
+# graduated strictness this section used to declare. `--strict` is applied
+# per-invocation instead — see `make test`'s two separate mypy commands.
+
+[[tool.mypy.overrides]]
+# No stubs and no py.typed marker upstream — nothing left to check here.
+module = ["aiokafka.*", "testcontainers.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# Repo root on sys.path so shared test helpers (tests/fakes.py) are
+# importable as `tests.fakes` from any test module, without needing an
+# `__init__.py` in every tests/ subdirectory.
+pythonpath = ["."]
+markers = [
+    "integration: requires testcontainers (postgres + redpanda)",
+    "contract: OpenAPI/AsyncAPI conformance checks",
+    "e2e: full stack — real Postgres + Kafka, real HTTP client",
+]
+
+[tool.coverage.run]
+source = ["src/forno"]
