@@ -18,8 +18,8 @@ jobs:
     name: fast gate (format · lint · mypy · import-linter · domain tests)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
         with: { version: "${{ env.UV_VERSION }}" }
       - run: uv sync --all-extras
       - run: make test
@@ -29,8 +29,8 @@ jobs:
     needs: fast-gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
         with: { version: "${{ env.UV_VERSION }}" }
       - run: uv sync --all-extras
       - run: make test-integration
@@ -40,8 +40,8 @@ jobs:
     needs: integration
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
         with: { version: "${{ env.UV_VERSION }}" }
       - run: uv sync --all-extras
       - run: uv run pytest tests/contract -m contract -q
@@ -51,7 +51,7 @@ jobs:
     needs: contract
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v3
       - run: docker build --target prod -t forno:ci .
       # SBOM / trivy scan: not yet wired up.
@@ -61,9 +61,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # `make up` is gated on `make test`, which needs uv on the runner.
-      - uses: astral-sh/setup-uv@v3
+      - uses: astral-sh/setup-uv@v6
         with: { version: "${{ env.UV_VERSION }}" }
       - run: uv sync --all-extras
       - run: make up
@@ -76,7 +76,7 @@ jobs:
     needs: smoke
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # The scenario's own duration (120 domain minutes at 120x ≈ 1 wall
       # minute): a 20-minute cut-off serves one or two orders and makes the
       # breach-rate band meaningless.
