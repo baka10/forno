@@ -66,7 +66,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with: { version: "${{ env.UV_VERSION }}" }
       - run: uv sync --all-extras
-      - run: make up
+      - run: make up || { docker compose --profile core --profile observability logs migrate api postgres | tail -80; exit 1; }
       - run: |
           timeout 60 bash -c 'until curl -sf localhost:8000/health/ready; do sleep 2; done'
       - run: make down
@@ -80,4 +80,4 @@ jobs:
       # The scenario's own duration (120 domain minutes at 120x ≈ 1 wall
       # minute): a 20-minute cut-off serves one or two orders and makes the
       # breach-rate band meaningless.
-      - run: make demo SCENARIO=busy-friday SEED=42
+      - run: make demo SCENARIO=busy-friday SEED=42 || { docker compose --profile core logs api migrate | tail -60; exit 1; }
