@@ -39,16 +39,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
+# The environment is complete at build time: `--no-sync` stops `uv run` from
+# trying to re-sync at startup as the unprivileged user (a reinstall of the
+# editable package would hit a root-owned .venv and fail with EACCES).
+RUN chown -R forno:forno /app
 USER forno
-ENTRYPOINT ["uv", "run", "forno"]
+ENTRYPOINT ["uv", "run", "--no-sync", "forno"]
 CMD ["serve", "--reload"]
 
 # --- test: dev dependencies, no reload, used by CI ----------------------------
 FROM dev AS test
-USER root
-RUN chown -R forno:forno /app
-USER forno
-ENTRYPOINT ["uv", "run"]
+ENTRYPOINT ["uv", "run", "--no-sync"]
 CMD ["pytest"]
 
 # --- builder: produce a wheel for the prod stage ------------------------------
