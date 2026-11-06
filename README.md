@@ -69,6 +69,7 @@ budget, a runbook, and a deterministic simulator that doubles as a system-level 
 | [API contract](docs/api.md) | Endpoint catalogue, SSE streams, error model, idempotency |
 | [Observability](docs/observability.md) | Metric catalogue, SLO definition, alert rules, dashboards |
 | [Simulator](docs/simulator.md) | Actors, determinism, time scaling, asserted invariants |
+| [MCP server](docs/mcp.md) | Tools, resources and prompts for coding agents; how to connect Claude Code, Copilot, Claude Desktop |
 | [Configuration](docs/configuration.md) | Scenario files, domain capacity vs. simulation behaviour |
 | [Runbook](docs/runbook.md) | What to do when an alert fires |
 | [ADRs](docs/adr/) | Every non-obvious decision, with the option that was rejected |
@@ -141,6 +142,8 @@ the first request. Empty panels are how portfolio projects die.
 | `make chaos` | Kill the kitchen projector at peak load, then prove recovery |
 | `make test` | Fast gate: lint, mypy, import-linter, pure domain tests (<30s, no containers) |
 | `make test-integration` | Testcontainers: Postgres + Redpanda |
+| `make mcp` / `make mcp-http` | MCP server for coding agents, stdio or Streamable HTTP — see [MCP server](docs/mcp.md) |
+| `make test-mcp` | The MCP server's gate: mypy strict + tests with a real MCP client |
 | `make logs SERVICE=api` | Follow structured logs, pretty-printed |
 | `make lint` | `ruff check --fix` + `ruff format` |
 | `make migrate` | Apply pending Alembic migrations against the running Postgres container |
@@ -229,6 +232,26 @@ Details in [Simulator](docs/simulator.md).
 
 ---
 
+## An MCP server for coding agents
+
+`forno_mcp/` lets an agent (Claude Code, Copilot agent mode, Claude Desktop) work with the **running**
+pizzeria the way an operator would, instead of guessing from `curl` output:
+
+- **Understand** — a service snapshot (open and late orders, ovens, SLI vs. SLO, firing alerts) and
+  `diagnose`, which walks the runbook's triage tree with the alert thresholds and answers the first
+  question that matters: *is the software broken, or are there more customers than chefs?*
+- **Watch and explain** — a bounded view of the SSE streams told as a story, and any order explained
+  against its promise and its state machine.
+- **Experiment** — run a simulator scenario against the live stack and read its invariant report, or
+  take an oven out of service (both annotated as destructive, so the client asks first).
+- **Read the rules** — the domain model, runbook, ADRs and scenarios as MCP resources.
+
+It is an external client like the simulator, enforced by import-linter
+([0011](docs/adr/0011-mcp-server-as-external-operator-client.md)). The repo ships a `.mcp.json`, so
+Claude Code picks it up when you open the project. Details in [MCP server](docs/mcp.md).
+
+---
+
 ## Observability
 
 Request rate and CPU prove nothing. These are the metrics an actual operator would stare at:
@@ -298,6 +321,8 @@ symptom that would change the answer.
 - **Kitchen tickets are a projection; chef actions are commands routed back through the order
   aggregate.** One write model, one source of truth. ([0006](docs/adr/0006-kitchen-tickets-as-projection.md))
 - **The simulator is an external client**, enforced by CI. ([0008](docs/adr/0008-simulator-as-external-client.md))
+- **The MCP server is an external operator client** — agents see what an operator sees, through the
+  same public contract. ([0011](docs/adr/0011-mcp-server-as-external-operator-client.md))
 - **Domain time is scaled; wall-clock time is not.** Compressing wall clock would make every
   `rate()` in Grafana a lie. ([0009](docs/adr/0009-scaled-domain-time.md))
 - **Abstractions require two implementations or a documented seam.** No DI container, no generic
@@ -328,6 +353,7 @@ src/forno/
   observability/   # metrics, structlog config, correlation context
 simulator/         # external client. cannot import src/forno.
   actors/          # manager, arrival_generator, cashier, customer, chef, waiter
+forno_mcp/         # MCP server for coding agents. cannot import src/forno either.
 deploy/
   grafana/         # provisioned dashboards + datasources
   prometheus/      # scrape config, recording + alert rules

@@ -18,6 +18,7 @@ A decision without a stated reversal condition is a preference. A decision with 
 | [0008](0008-simulator-as-external-client.md) | The simulator is an external client | Accepted |
 | [0009](0009-scaled-domain-time.md) | Domain time is scaled; wall-clock time is not | Accepted |
 | [0010](0010-abstraction-budget.md) | An abstraction needs two implementations or a documented seam | Accepted |
+| [0011](0011-mcp-server-as-external-operator-client.md) | The MCP server is an external operator client | Accepted |
 
 Format: [Michael Nygard's](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions),
 lightly extended with a "what would change this" section.

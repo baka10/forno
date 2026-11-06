@@ -1,0 +1,65 @@
+# Deliberately separate from the root pyproject.toml, for the same reason as
+# simulator/pyproject.toml: the MCP server is an external client
+# (docs/adr/0011-mcp-server-as-external-operator-client.md) and must not be able
+# to import `forno` by accident.
+
+[project]
+name = "forno-mcp"
+version = "0.1.0"
+description = "MCP server that lets an AI agent observe, diagnose and exercise a live Forno pizzeria."
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=2.3,<3",
+    "httpx>=0.27",
+    "httpx-sse>=0.4",
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "mypy>=1.13", "ruff>=0.7", "types-PyYAML>=6.0"]
+
+# Not an installable package: run from the repo root as `python -m forno_mcp`
+# (see docs/mcp.md "Running it"), exactly like `python -m simulator`.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+# Repo root on sys.path so `import forno_mcp` resolves the same way it does
+# under `python -m forno_mcp`.
+pythonpath = [".."]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# Tests are plain pytest functions; strictness buys nothing there, and
+# narrowing MCP result unions in every assertion would only add noise.
+module = ["tests.*", "forno_mcp.tests.*"]
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+disable_error_code = ["union-attr", "assignment"]
+
+# --- Quality gates -----------------------------------------------------------
+# Mirrors the root pyproject.toml's [tool.ruff] — see the comment in
+# simulator/pyproject.toml for why a nested project needs its own copy.
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",       # docstrings are opt-in here, not mandatory (CONTRIBUTING.md: "why", not "what")
+    "COM812",  # conflicts with ruff format
+    "ISC001",  # conflicts with ruff format
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "PLR2004", "ARG001", "ARG005", "SLF001", "ANN001", "ANN201", "INP001"]

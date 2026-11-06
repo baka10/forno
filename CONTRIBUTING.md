@@ -38,7 +38,8 @@ solved by pinning.
 | Lint | `ruff check` | everything, with `--select ALL` and a documented ignore list |
 | Types | `mypy --strict` | `domain/`, `application/` |
 | Types | `mypy` (default) | `adapters/`, `tests/`, `simulator/` |
-| Layers | `import-linter` | three contracts |
+| Types | `mypy --strict` | `forno_mcp/` (own project, `make test-mcp`, own CI job — tests relaxed) |
+| Layers | `import-linter` | four contracts (the fourth keeps `forno_mcp` external, ADR-0011) |
 | Security | `bandit`, `pip-audit` | installed as dev deps, not yet wired into `make test`/CI |
 | Tests | `pytest` | see below |
 

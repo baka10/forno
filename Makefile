@@ -1,4 +1,4 @@
-.PHONY: up down clear demo live seed-prompt seed chaos test test-integration logs lint fmt migrate build
+.PHONY: up down clear demo live seed-prompt seed chaos test test-integration test-mcp mcp mcp-http logs lint fmt migrate build
 
 SCENARIO ?= busy-friday
 SEED ?= 42
@@ -132,6 +132,21 @@ test-integration:
 ## Narrow on purpose — order placement + visibility. See tests/e2e/.
 test-e2e:
 	uv run pytest tests/e2e -q -m e2e
+
+## MCP server for coding agents (docs/mcp.md). stdio is what Claude Code,
+## Copilot and Claude Desktop spawn themselves; run it by hand only to check
+## it starts. mcp-http serves Streamable HTTP for clients that want a URL.
+mcp:
+	uv run --project forno_mcp --quiet python -m forno_mcp
+
+mcp-http:
+	uv run --project forno_mcp --quiet python -m forno_mcp --http
+
+## The MCP server's own gate: strict mypy + tests against a fake API and a
+## real in-process MCP client. No containers. (ruff runs in `make test`.)
+test-mcp:
+	cd forno_mcp && uv run mypy .
+	cd forno_mcp && uv run pytest -q
 
 logs:
 	docker compose logs -f --tail=200 $(SERVICE)

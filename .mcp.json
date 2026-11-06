@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "forno": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "--project", "forno_mcp", "--quiet", "python", "-m", "forno_mcp"],
+      "env": {
+        "FORNO_MCP_API_URL": "http://localhost:8000",
+        "FORNO_MCP_PROMETHEUS_URL": "http://localhost:9090"
+      }
+    }
+  }
+}
