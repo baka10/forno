@@ -45,11 +45,18 @@ class RemakeReason(StrEnum):
 
 
 class TicketStatus(StrEnum):
-    """`KitchenTicketResponse.status` — see docs/adr/0006-kitchen-tickets-as-projection.md."""
+    """`KitchenTicketResponse.status` — see docs/adr/0006-kitchen-tickets-as-projection.md.
+
+    Must cover every status the kitchen projector writes
+    (tests/contracts/test_ticket_status.py). `VOIDED` is kept apart from
+    `CANCELLED` because the food may already exist: the order was voided after
+    the kitchen started, not withdrawn before it.
+    """
 
     OPEN = "OPEN"
     READY = "READY"
     CANCELLED = "CANCELLED"
+    VOIDED = "VOIDED"
 
 
 class StatsMetric(StrEnum):
