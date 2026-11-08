@@ -77,7 +77,10 @@ make test-mcp     # mypy strict + tests (fake API, real in-process MCP client)
 ```
 
 `start_simulation` runs the simulator on the host with `uv run --project simulator`, so the API
-must be reachable from the host — which it is under `make up` (`localhost:8000`).
+must be reachable from the host — which it is under `make up` (`localhost:8000`). It passes the
+scenario as a name plus `FORNO_SIM_SCENARIO_DIR` (the repo's `scenarios/`, or a temporary directory
+holding the re-timed copy); inside the compose `simulator` service that variable defaults to the
+`/scenarios` mount.
 
 ### Configuration
 
@@ -161,5 +164,11 @@ application — FSM transition tables, the alert → runbook mapping — is pinn
 `docs/domain-model.md`, `src/forno/domain/item.py`, `deploy/prometheus/alert_rules.yml` and the
 runbook headings, so drift fails CI rather than misleading an agent.
 
-What is not covered yet: a run against the real compose stack in CI (the `system-invariants` job
-is the natural place for it).
+The fake simulator resolves its scenario exactly as `simulator/__main__.py` does
+(`$FORNO_SIM_SCENARIO_DIR/<name>.yaml`), so a job that points at the wrong file fails in the tests,
+not on the live stack.
+
+It has also been driven by hand against a live `make up` stack over stdio, every tool and the
+resources and prompts, including a full `busy-friday` simulation started through
+`start_simulation` (4/4 invariants) and an oven taken out of service and back. That check is not in
+CI yet: the `system-invariants` job is the natural place for it.

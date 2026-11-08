@@ -102,16 +102,28 @@ class Prometheus:
         return body["data"]
 
     async def scalar(self, expr: str) -> float | None:
-        """Sum of an instant vector, or None when the query has no data yet
+        """Sum of the result, or None when the query has no data yet
         (an idle window is "no data", not zero — see recording_rules.yml)."""
-        data = await self._get("/api/v1/query", {"query": expr})
-        values = [float(sample["value"][1]) for sample in data.get("result", [])]
+        values = [v for _, v in await self.vector(expr)]
         values = [v for v in values if v == v]  # drop NaN  # noqa: PLR0124
         return sum(values) if values else None
 
     async def vector(self, expr: str) -> list[tuple[dict[str, str], float]]:
+        """An instant query as (labels, value) pairs. A `scalar` result comes
+        back as one unlabelled pair; anything else is refused with a message
+        the agent can act on, rather than a crash."""
         data = await self._get("/api/v1/query", {"query": expr})
-        return [(s["metric"], float(s["value"][1])) for s in data.get("result", [])]
+        kind = data.get("resultType")
+        result = data.get("result", [])
+        if kind == "scalar":
+            return [({}, float(result[1]))]
+        if kind == "vector":
+            return [(s["metric"], float(s["value"][1])) for s in result]
+        msg = (
+            f"The query returned a {kind} result; only instant vectors and scalars are "
+            "supported. Wrap a range selector in a function, e.g. rate(metric[5m])."
+        )
+        raise ValueError(msg)
 
     async def alerts(self) -> list[dict[str, Any]]:
         data = await self._get("/api/v1/alerts")

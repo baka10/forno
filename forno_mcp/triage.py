@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from forno_mcp.knowledge import runbook_section
+from forno_mcp.knowledge import ALERT_RUNBOOK_SECTION, runbook_section
 from forno_mcp.snapshot import SLO_TARGET
 
 if TYPE_CHECKING:
@@ -105,7 +105,7 @@ def _kitchen_branch(d: Diagnosis, snap: Snapshot, age: float) -> Diagnosis:
     return d
 
 
-def diagnose(snap: Snapshot) -> Diagnosis:  # noqa: PLR0911, PLR0915 -- one return per runbook branch, kept in the runbook's order
+def diagnose(snap: Snapshot) -> Diagnosis:  # noqa: PLR0911 -- one return per runbook branch, kept in the runbook's order
     d = Diagnosis(verdict="", category="unknown", runbook_heading="Triage: the first sixty seconds")
     if "prometheus" in snap.unavailable:
         d.data_gaps.append(
@@ -170,6 +170,31 @@ def diagnose(snap: Snapshot) -> Diagnosis:  # noqa: PLR0911, PLR0915 -- one retu
         d.verdict = "Something needs a human: events landed in the DLQ."
         d.category = "software"
         d.runbook_heading = "DLQNotEmpty / PoisonEventDetected"
+        return d
+
+    return _nothing_matched(d, snap)
+
+
+def _nothing_matched(d: Diagnosis, snap: Snapshot) -> Diagnosis:
+    """No runbook branch fired. Call it healthy only if the data to say so was there."""
+    if snap.alerts:
+        # The tree found nothing, but Alertmanager disagrees: trust the alert
+        # and point at its runbook entry instead of calling the system healthy.
+        first = snap.alerts[0]
+        names = ", ".join(sorted({str(a["name"]) for a in snap.alerts}))
+        d.path.append(f"no branch matched, but alerts are {first['state']}: {names}")
+        d.verdict = f"No triage branch matched, yet {names} is active; read its runbook entry."
+        d.category = "unknown"
+        d.runbook_heading = ALERT_RUNBOOK_SECTION.get(str(first["name"]), d.runbook_heading)
+        return d
+
+    if "prometheus" in snap.unavailable:
+        d.path.append("no problem visible in API data; metrics unavailable")
+        d.verdict = (
+            "Nothing wrong is visible in the API data, but Prometheus was unreachable, so "
+            "the SLI, outbox, DLQ and 5xx checks were skipped. Not enough to call it healthy."
+        )
+        d.category = "unknown"
         return d
 
     d.verdict = "Healthy: no pipeline lag, no backlog, promises being met."

@@ -43,6 +43,9 @@ _REPORT_START = "─── forno simulation report"
 _TAIL_LINES = 400
 _RECENT = 15
 _SIM_REFUSED = 2  # simulator/__main__.py: exit code when it refuses to start
+# The simulator logs one line per event; a traceback or a long report line can
+# exceed asyncio's default 64 KiB line limit, which would kill the pump.
+_LINE_LIMIT = 1024 * 1024
 
 
 @dataclass
@@ -96,6 +99,11 @@ class SimulationRunner:
         self._api = api
         self._jobs: dict[str, SimulationJob] = {}
         self._tmp = Path(tempfile.mkdtemp(prefix="forno-mcp-"))
+        # Held from the "is one running?" check until the job is registered:
+        # the SDK serves tool calls concurrently, and two simulators on one
+        # pizzeria corrupt each other's shadow ledgers.
+        self._start_lock = asyncio.Lock()
+        self._pumps: set[asyncio.Task[None]] = set()
 
     def get(self, job_id: str) -> SimulationJob:
         if job_id not in self._jobs:
@@ -121,9 +129,13 @@ class SimulationRunner:
         return len(page)
 
     def _retimed_copy(self, path: Path, time_scale: int) -> Path:
+        """Write the re-timed scenario as `<dir>/<name>.yaml`: the simulator
+        takes a directory and a scenario name, never a file path."""
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
         raw.setdefault("simulation", {})["time_scale"] = time_scale
-        copy = self._tmp / f"{path.stem}@{time_scale}x.yaml"
+        target_dir = self._tmp / f"{time_scale}x"
+        target_dir.mkdir(exist_ok=True)
+        copy = target_dir / path.name
         copy.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
         return copy
 
@@ -134,6 +146,22 @@ class SimulationRunner:
         seed: int = 42,
         duration_minutes: int | None = None,
         match_api_time_scale: bool = True,
+    ) -> SimulationJob:
+        async with self._start_lock:
+            return await self._start_locked(
+                scenario,
+                seed=seed,
+                duration_minutes=duration_minutes,
+                match_api_time_scale=match_api_time_scale,
+            )
+
+    async def _start_locked(
+        self,
+        scenario: str,
+        *,
+        seed: int,
+        duration_minutes: int | None,
+        match_api_time_scale: bool,
     ) -> SimulationJob:
         if (active := self.running()) is not None:
             msg = (
@@ -189,7 +217,8 @@ class SimulationRunner:
         env = {
             **os.environ,
             "FORNO_SIM_API_URL": self._settings.api_url,
-            "FORNO_SIM_SCENARIO": str(run_path),
+            "FORNO_SIM_SCENARIO": run_path.stem,
+            "FORNO_SIM_SCENARIO_DIR": str(run_path.parent),
             "FORNO_SIM_SEED": str(seed),
             "FORNO_SIM_DURATION_MINUTES": str(duration),
         }
@@ -199,16 +228,40 @@ class SimulationRunner:
             env=env,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            limit=_LINE_LIMIT,
         )
         self._jobs[job.id] = job
-        asyncio.get_running_loop().create_task(self._pump(job))
+        pump = asyncio.create_task(self._pump(job))
+        self._pumps.add(pump)  # the loop keeps only a weak reference to tasks
+        pump.add_done_callback(self._pumps.discard)
         return job
 
     async def _pump(self, job: SimulationJob) -> None:
-        assert job.process is not None  # noqa: S101 -- set by start() before scheduling
-        assert job.process.stdout is not None  # noqa: S101
+        """Collect output until the process exits, and always settle the job:
+        a job stuck in `running` would refuse every later start."""
+        process = job.process
+        assert process is not None  # noqa: S101 -- set by start() before scheduling
+        assert process.stdout is not None  # noqa: S101
+        try:
+            await self._read_output(job, process.stdout)
+        except Exception as exc:  # noqa: BLE001 -- recorded on the job; the process is stopped below
+            job.notes.append(f"Lost the simulator's output ({exc!r}); stopping it.")
+            with contextlib.suppress(ProcessLookupError):
+                process.terminate()
+        finally:
+            job.exit_code = await process.wait()
+            job.finished_at = time.time()
+            if job.stop_requested:
+                job.state = "stopped"
+            else:
+                job.state = "succeeded" if job.exit_code == 0 else "failed"
+            if job.exit_code == _SIM_REFUSED and not job.report:
+                job.notes.append("Simulator refused to start; see recent_log for the reason.")
+
+    @staticmethod
+    async def _read_output(job: SimulationJob, stdout: asyncio.StreamReader) -> None:
         in_report = False
-        async for raw in job.process.stdout:
+        async for raw in stdout:
             line = _ANSI.sub("", raw.decode("utf-8", "replace")).rstrip()
             if not line:
                 continue
@@ -217,14 +270,6 @@ class SimulationRunner:
                 in_report = True
             if in_report:
                 job.report.append(line)
-        job.exit_code = await job.process.wait()
-        job.finished_at = time.time()
-        if job.stop_requested:
-            job.state = "stopped"
-        else:
-            job.state = "succeeded" if job.exit_code == 0 else "failed"
-        if job.exit_code == _SIM_REFUSED and not job.report:
-            job.notes.append("Simulator refused to start; see recent_log for the reason.")
 
     async def stop(self, job_id: str) -> SimulationJob:
         job = self.get(job_id)

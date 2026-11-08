@@ -4,12 +4,13 @@ fake API and Prometheus."""
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
 from mcp import Client
 
-from forno_mcp.server import build_server
+from forno_mcp.server import _explain, build_server
 
 from .fakes import order
 
@@ -76,6 +77,7 @@ async def test_snapshot_headline_tells_the_story(settings, busy):
     assert snap["orders"]["open_total"] == 3
     assert snap["orders"]["already_late"] == 1
     assert snap["orders"]["latest_late_orders"][0]["order_id"] == "o1"
+    assert snap["orders"]["truncated_statuses"] == []
     headline = " ".join(snap["headline"])
     assert "14/14 slots busy" in headline
     assert "below the 95% SLO" in headline
@@ -97,6 +99,8 @@ async def test_snapshot_survives_prometheus_being_down(settings, busy):
         snap = data(await client.call_tool("get_service_snapshot", {}))
     assert "prometheus" in snap["unavailable_sources"]
     assert snap["orders"]["open_total"] == 3
+    assert "Alert state unknown" in " ".join(snap["headline"])
+    assert "No alerts firing" not in " ".join(snap["headline"])
 
 
 async def test_api_down_is_reported_not_crashed(settings, forno, prom):
@@ -172,3 +176,11 @@ async def test_list_scenarios(settings, forno, prom):
         scenarios = data(await client.call_tool("list_scenarios", {}))
     names = {s["name"] for s in scenarios}
     assert "understaffed" in names
+
+
+async def test_cancel_advice_is_unknown_once_an_item_was_scrapped():
+    scrapped = order("o9", "IN_KITCHEN", items=[("Diavola", "SCRAPPED"), ("Diavola", "QUEUED")])
+    queued = order("o8", "IN_KITCHEN", items=[("Diavola", "QUEUED")])
+    now = datetime.now(UTC)
+    assert _explain(scrapped, now)["can_still_be_cancelled"] is None
+    assert _explain(queued, now)["can_still_be_cancelled"] is True

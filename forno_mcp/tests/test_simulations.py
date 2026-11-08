@@ -18,9 +18,14 @@ from .fakes import order
 
 pytestmark = pytest.mark.asyncio
 
+# Resolves the scenario exactly like simulator/__main__.py does: a name inside
+# FORNO_SIM_SCENARIO_DIR (default /scenarios), so a path-shaped value fails here too.
 FAKE_SIM = """
 import os, sys, time
-print("scenario file:", os.environ["FORNO_SIM_SCENARIO"])
+d = os.environ.get("FORNO_SIM_SCENARIO_DIR", "/scenarios")
+path = f"{d}/{os.environ['FORNO_SIM_SCENARIO']}.yaml"
+open(path).close()
+print("scenario file:", path)
 print("\\x1b[32morder placed\\x1b[0m table=4")
 time.sleep(float(os.environ.get("FAKE_SLEEP", "0")))
 print("─── forno simulation report ───")
@@ -70,6 +75,36 @@ async def test_retimes_scenario_to_the_live_api(runner, forno):
 async def test_refuses_mismatch_when_not_allowed_to_retime(runner):
     with pytest.raises(RuntimeError, match="TIME_SCALE=120"):
         await runner.start("busy-friday", match_api_time_scale=False)
+
+
+async def test_concurrent_starts_cannot_both_run(runner, monkeypatch):
+    monkeypatch.setenv("FAKE_SLEEP", "1")
+    results = await asyncio.gather(
+        runner.start("busy-friday", duration_minutes=1),
+        runner.start("oven-down", duration_minutes=1),
+        return_exceptions=True,
+    )
+    started = [r for r in results if not isinstance(r, BaseException)]
+    refused = [r for r in results if isinstance(r, RuntimeError)]
+    assert len(started) == 1
+    assert len(refused) == 1
+    await runner.stop(started[0].id)
+    await wait_done(runner, started[0].id)
+
+
+async def test_job_settles_even_if_its_output_is_lost(runner, monkeypatch):
+    monkeypatch.setenv("FAKE_SLEEP", "1")
+
+    async def broken_reader(job, stdout) -> None:
+        msg = "Separator is found, but chunk is longer than limit"  # StreamReader's own error
+        raise ValueError(msg)
+
+    monkeypatch.setattr(SimulationRunner, "_read_output", staticmethod(broken_reader))
+    job = await runner.start("busy-friday", duration_minutes=1)
+    done = await wait_done(runner, job.id)
+    assert done.state in {"failed", "succeeded"}
+    assert any("Lost the simulator's output" in n for n in done.notes)
+    assert runner.running() is None
 
 
 async def test_one_simulation_at_a_time(runner, monkeypatch):

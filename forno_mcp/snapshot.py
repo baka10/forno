@@ -46,6 +46,7 @@ PROM_SIGNALS: dict[str, str] = {
 }
 
 SLO_TARGET = 0.95  # docs/observability.md "SLO": 95% of orders ready by promised_at + grace
+_PAGE = 200  # the largest page the snapshot asks /orders for
 
 
 def _parse_ts(value: str | None) -> datetime | None:
@@ -86,9 +87,12 @@ class Snapshot:
 
 async def _orders(api: FornoApi, now: datetime) -> dict[str, Any]:
     pages = await asyncio.gather(
-        *(api.get_json("/orders", params={"status": s, "limit": 200}) for s in ORDER_OPEN)
+        *(api.get_json("/orders", params={"status": s, "limit": _PAGE}) for s in ORDER_OPEN)
     )
     by_status = {s: len(p) for s, p in zip(ORDER_OPEN, pages, strict=True)}
+    # The API pages newest-first, so a full page has cut off the *oldest*
+    # orders: exactly the ones the late/oldest figures care about.
+    truncated = [s for s, n in by_status.items() if n >= _PAGE]
     waiting = [o for p in pages[:3] for o in p]  # PLACED, ACCEPTED, IN_KITCHEN: not ready yet
     late = []
     for order in waiting:
@@ -115,7 +119,14 @@ async def _orders(api: FornoApi, now: datetime) -> dict[str, Any]:
             if oldest
             else None
         ),
-        "note": "Counts are capped at 200 per status (one page).",
+        "truncated_statuses": truncated,
+        "note": (
+            f"One page of {_PAGE} newest orders per status. For {', '.join(truncated)} "
+            "older orders were cut off: counts are a floor, and the oldest/latest-late "
+            "figures may miss the worst cases (the Prometheus ticket-age signal does not)."
+            if truncated
+            else f"Complete: every status has fewer than {_PAGE} open orders."
+        ),
     }
 
 
@@ -205,8 +216,10 @@ def _headline(snap: Snapshot) -> list[str]:
     if snap.alerts:
         names = ", ".join(sorted({str(a["name"]) for a in snap.alerts}))
         out.append(f"Alerts firing or pending: {names}.")
-    elif "prometheus" not in snap.unavailable:
+    elif not {"prometheus", "prometheus-alerts"} & set(snap.unavailable):
         out.append("No alerts firing.")
+    else:
+        out.append("Alert state unknown: Prometheus alerts could not be read.")
     return out
 
 
@@ -233,6 +246,11 @@ async def take_snapshot(api: FornoApi, prom: Prometheus) -> Snapshot:
     except UnreachableError as exc:
         ready = {"status": "unreachable", "detail": str(exc)}
     snap = Snapshot(taken_at=now.isoformat(timespec="seconds"), api=ready)
+    # Prometheus is independent of the API, so both are read in one round trip.
+    metrics = asyncio.gather(
+        _safe(_signals(prom), "prometheus", snap),
+        _safe(prom.alerts(), "prometheus-alerts", snap),
+    )
     if ready["status"] == "ok":
         orders, kitchen, ovens, tables, stats = await asyncio.gather(
             _safe(_orders(api, now), "orders", snap),
@@ -246,10 +264,7 @@ async def take_snapshot(api: FornoApi, prom: Prometheus) -> Snapshot:
         snap.ovens = ovens or []
         snap.tables = tables or {}
         snap.stats = stats or {}
-    signals, alerts = await asyncio.gather(
-        _safe(_signals(prom), "prometheus", snap),
-        _safe(prom.alerts(), "prometheus-alerts", snap),
-    )
+    signals, alerts = await metrics
     snap.signals = signals or {}
     snap.alerts = _firing(alerts or [])
     snap.unavailable = sorted(set(snap.unavailable))

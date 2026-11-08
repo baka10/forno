@@ -3,7 +3,9 @@ under `docker compose --profile sim` — see docker-compose.yml `simulator`
 service and docs/simulator.md "Running it".
 
     FORNO_SIM_API_URL
-    FORNO_SIM_SCENARIO
+    FORNO_SIM_SCENARIO           (scenario name, read from $FORNO_SIM_SCENARIO_DIR/<name>.yaml)
+    FORNO_SIM_SCENARIO_DIR       (default /scenarios, the compose mount; forno_mcp points it at
+                                  the repo's scenarios/ or at a re-timed copy)
     FORNO_SIM_SEED
     FORNO_SIM_DURATION_MINUTES   (overrides the scenario file, optional)
     FORNO_SIM_BOOTSTRAP_ONLY     (run ManagerActor.bootstrap(), then exit — no actors, no wait;
@@ -253,7 +255,8 @@ async def run(  # noqa: C901, PLR0915 -- single process-wiring function; splitti
 def main() -> int:
     configure_logging(os.environ.get("FORNO_SIM_LOG_LEVEL", "INFO"))
     scenario_name = os.environ.get("FORNO_SIM_SCENARIO", "busy-friday")
-    scenario_path = f"/scenarios/{scenario_name}.yaml"
+    scenario_dir = os.environ.get("FORNO_SIM_SCENARIO_DIR", "/scenarios")
+    scenario_path = f"{scenario_dir}/{scenario_name}.yaml"
     api_url = os.environ["FORNO_SIM_API_URL"]
     seed = int(os.environ.get("FORNO_SIM_SEED", "42"))
     duration_env = os.environ.get("FORNO_SIM_DURATION_MINUTES", "")

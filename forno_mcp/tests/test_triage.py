@@ -80,3 +80,19 @@ def test_without_prometheus_falls_back_to_api_data():
     d = triage.diagnose(s)
     assert d.category == "capacity"
     assert d.data_gaps
+
+
+def test_no_metrics_is_unknown_not_healthy():
+    s = Snapshot(taken_at="now", api={"status": "ok", "time_scale": 1})
+    s.unavailable = ["prometheus"]
+    d = triage.diagnose(s)
+    assert d.category == "unknown"
+    assert "Not enough to call it healthy" in d.verdict
+
+
+def test_an_active_alert_overrides_a_clean_tree():
+    s = snap()
+    s.alerts = [{"name": "OutboxLagHigh", "state": "pending"}]
+    d = triage.diagnose(s)
+    assert d.category == "unknown"
+    assert d.runbook_heading == "OutboxLagHigh / OutboxBacklogGrowing"

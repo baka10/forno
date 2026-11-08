@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import functools
 import json
+import logging
 import sys
 import time
 from datetime import UTC, datetime
@@ -109,7 +110,13 @@ def _explain(order: dict[str, Any], now: datetime) -> dict[str, Any]:
     items = order.get("items", [])
     remakes = [i for i in items if i.get("remake_of")]
     in_oven = any(i["status"] in {"IN_OVEN", "READY", "DELIVERED"} for i in items)
-    can_cancel = status in {"ACCEPTED", "IN_KITCHEN"} and not in_oven
+    # The domain refuses a cancel once any item has *ever* been in an oven. The
+    # API does not say whether a SCRAPPED item was scrapped before or after
+    # baking, so with one present the honest answer is "unknown" (None).
+    scrapped = any(i["status"] == "SCRAPPED" for i in items)
+    can_cancel: bool | None = status in {"ACCEPTED", "IN_KITCHEN"} and not in_oven
+    if can_cancel and scrapped:
+        can_cancel = None
     return {
         "order_id": order["id"],
         "status": status,
@@ -392,4 +399,7 @@ def run(
 ) -> None:
     server = build_server()
     _log("server_start", transport=transport)
+    # The SDK logs at INFO, which makes httpx print a line per request to
+    # stderr; our own `tool_call` record already covers each call.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     server.run(transport, **kwargs)
