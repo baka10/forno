@@ -22,6 +22,7 @@ from sqlalchemy import func, select
 
 from forno.adapters.db.models import KitchenTicketModel, StatsOrderModel, TicketLineModel
 from forno.adapters.messaging.inbox import mark_processed_or_skip
+from forno.contracts.enums import TicketStatus
 from forno.domain.exceptions import DomainError
 from forno.domain.order import Channel
 from forno.observability import metrics
@@ -279,17 +280,17 @@ class KitchenProjector(Consumer):
         elif event_type == "ItemStateChanged":
             await self._on_item_state_changed(session, payload)
         elif event_type in {"OrderCancelled", "OrderRejected"}:
-            await self._on_ticket_closed(session, payload, "CANCELLED")
+            await self._on_ticket_closed(session, payload, TicketStatus.CANCELLED)
         elif event_type == "OrderVoided":
-            await self._on_ticket_closed(session, payload, "VOIDED")
+            await self._on_ticket_closed(session, payload, TicketStatus.VOIDED)
         elif event_type == "OrderReady":
-            await self._on_ticket_closed(session, payload, "READY")
+            await self._on_ticket_closed(session, payload, TicketStatus.READY)
         await _refresh_kitchen_gauges(session)
 
     async def _on_order_placed(self, session: AsyncSession, payload: dict[str, Any]) -> None:
         ticket = KitchenTicketModel(
             order_id=UUID(payload["order_id"]),
-            status="OPEN",
+            status=TicketStatus.OPEN,
             created_at=datetime.fromisoformat(payload["occurred_at"]),
         )
         session.add(ticket)
@@ -349,7 +350,7 @@ class KitchenProjector(Consumer):
         line.status_changed_at = occurred_at
 
     async def _on_ticket_closed(
-        self, session: AsyncSession, payload: dict[str, Any], status: str
+        self, session: AsyncSession, payload: dict[str, Any], status: TicketStatus
     ) -> None:
         ticket = (
             await session.execute(
@@ -373,7 +374,7 @@ async def _refresh_kitchen_gauges(session: AsyncSession) -> None:
         await session.execute(
             select(TicketLineModel.station, TicketLineModel.status, func.count())
             .join(KitchenTicketModel, KitchenTicketModel.id == TicketLineModel.ticket_id)
-            .where(KitchenTicketModel.status == "OPEN")
+            .where(KitchenTicketModel.status == TicketStatus.OPEN)
             .group_by(TicketLineModel.station, TicketLineModel.status)
         )
     ).all()
@@ -385,7 +386,7 @@ async def _refresh_kitchen_gauges(session: AsyncSession) -> None:
             select(TicketLineModel.station, func.min(KitchenTicketModel.created_at))
             .join(KitchenTicketModel, KitchenTicketModel.id == TicketLineModel.ticket_id)
             .where(
-                KitchenTicketModel.status == "OPEN",
+                KitchenTicketModel.status == TicketStatus.OPEN,
                 TicketLineModel.status.notin_(("READY", "DELIVERED")),
             )
             .group_by(TicketLineModel.station)
