@@ -23,11 +23,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import itertools
 import os
 import signal
 import sys
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 import httpx
 
@@ -176,6 +176,10 @@ async def run(  # noqa: C901, PLR0915 -- single process-wiring function; splitti
             tasks.append(asyncio.create_task(waiter.run()))
 
         occupied_tables: set[int] = set()
+        # Arrivals happen in seed order, so the n-th customer always gets the
+        # same stream (docs/simulator.md "Determinism"); a random suffix here
+        # made every run a different workload under the same seed.
+        customer_numbers = itertools.count()
 
         def spawn_customer(party_size: int, channel: Channel) -> None:
             table_number: int | None = None
@@ -198,7 +202,7 @@ async def run(  # noqa: C901, PLR0915 -- single process-wiring function; splitti
                 catalog,
                 ledger,
                 sim.behaviour,
-                rng_for(f"customer-{uuid4()}", seed),
+                rng_for(f"customer-{next(customer_numbers)}", seed),
             )
 
             async def _visit() -> None:
